@@ -1,0 +1,34 @@
+{
+    "hospitals": [
+        {
+            "name": "Grand River Hospital",
+            "departments": [
+                {
+                    "name": "Cardiology",
+                    "patients": [
+                        {
+                            "id": 102,
+                            "name": "Ali",
+                            "status": "Discharged"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "St. Mary's Hospital",
+            "departments": [
+                {
+                    "name": "Emergency",
+                    "patients": [
+                        {
+                            "id": 201,
+                            "name": "Raihan",
+                            "status": "Waiting"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
