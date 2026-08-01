@@ -1,0 +1,7 @@
+Fruits,Calories
+Apple,130
+Avacado,50
+Banana,110
+Cantaloupe,50
+Grapefruit,60
+Grapes,90
