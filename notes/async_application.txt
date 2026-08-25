@@ -1,0 +1,49 @@
+************************** Case 1 ***********************************************
+
+Suppose one SmartOps user submits one lead:
+
+async def create_lead():
+    result = await save_to_supabase()
+    return result
+
+While Supabase is processing that request, another SmartOps user might:
+
+Open the complaints page
+Request an AI summary
+Upload a document
+Create another lead
+
+The server can process those other requests instead of freezing while the first request waits.
+
+So each request may contain only one lead, but the application serves many users concurrently.
+
+
+************************** Case 2 ***********************************************
+
+Even with one lead, you could have several independent API calls:
+email_check, company_info, risk_score = await asyncio.gather(
+    verify_email(lead.email),
+    fetch_company_information(lead.company),
+    calculate_external_risk(lead),
+)
+There is only one lead, but three operations can wait concurrently.
+
+
+************************** Case 3 ***********************************************
+
+One CLI lead + one operation:
+Async has no speed advantage.
+
+Multiple leads or operations:
+Async can overlap waiting and save time.
+
+Real web application:
+Async also helps serve many users concurrently.
+
+
+************************** Summary  ***********************************************
+
+this will be helpful when multiple apis are calling at a same time.
+We will have many users and they can call the api to fetch guards or summary etc 
+all this has to be done concurrently, hence async will help There
+to fetch data from supabase and other work without waiting for one request to complete

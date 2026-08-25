@@ -1,0 +1,73 @@
+how neural netweork learns it is called gradient descent
+
+so just to remind we are seeing an example of 28 X 28 pixel image which in total 784 neuron 
+this activation is the 1st layer of neuron ( input layer of network)
+next layer is based on weighted sum of each activation and bias
+we have 2 hidden layers with 16 neurons each, network has 13002 ways to adjust
+
+second layer pick up edges and third one will shape
+
+#***************************************************************************#
+Cost Function
+
+so first we have to train the neural network
+with some labeled data and than some unlabeled data
+
+now if your function is doing some random things, than last layer will have utter trash data
+for example no 3 end result can be 3,4,7,8
+so we introduce a cost function
+
+cost function: telling the computer that this is bad data
+in maths term add up the square of the difference trash output activation and value we want
+
+so if the number comes large which network seems like it does not know what it is doing
+if the number is small the network is confident
+
+average cost of all training data will tell us to make machine learns
+Input = 13002 weights/biases
+output = 1 number which is cost
+
+how would you find the input which minize the output number ?
+so basically start with random point and shift to right if slope is negative or shift to left if slope is positive
+even then you can end up with multiple numbers for local minima depends on which random point you chosed to start
+
+
+#***********************************************************************#
+Gradient Function
+
+Muliple variable calculus :- Gradient of a function gives you the direction of steepest ascent
+length of this gradient vector is how steep the slope is
+
+gradient function give the nudges which can be add up in the vector, which tells the most rapid decrease to the cost function
+
+Note : the cost function is average on all the training data
+and how it learn is done through back propogation
+
+process of repeatedly nudging an input of a function by some multiple of negative gradient is called gradient descent
+it is a way to converge towards some local minimum of a cost function
+
+so the nudge tells us two important thing. if corresponding of the input vector (gradient) should be nudged dow or right 
+if its negative than vector should be decrease, if positive than increase
+but magintude tells which change have more impact on function
+
+
+#***************************************************************************#
+Neural Network Function 
+Input 784 numbers pixels
+output : 10 numbers
+Parameters : 13002 weights/ biases 
+
+Cost function : it is a layer of complexity on top of neural network
+input : 13002 weights / biases 
+output : 1 number which tell the network how confident it is 
+
+gradient function : is one more layer of complexity
+it tells us what nudges to all these weights and biases can cause fastest change to the cost function
+
+
+#***************************************************************************#
+in short network can recognize digits pretty well even though if its not correct 
+because it is just a numbers which are changing, they cant draw exactly 
+but that is old technology : multilayer preception
+
+modern variants : convolutional NN , LSTM

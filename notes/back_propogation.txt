@@ -1,0 +1,56 @@
+see the 3rd video and it will recap neural network, cost, gradient function 
+
+cost of function is 32(3.2) times as compared to other component of 10 0.1 
+
+intutive walkthrough
+Each step uses every example theoretically 
+
+example for image 2 :
+network is not trained properly.
+so the end layer shows something like this [0.5, 0.8, 0.2, 1.0, 0.4, 0.6, 1.0 , 0.0, 0.2, 0.1] correspond to digit 0 to 9
+
+now we cant change the activation on it, we can only have influence on weight and biases
+so now we have to train it and hence we will increase ther nudge of 2 and decrease of other 
+magnitude depends on how far it is from actual result
+
+0.2 = sigmoid or relu (w0a0 + w1a1 ...wn-1an-1 + b)  increase bias or weights or change ai
+so the connection with brightest neuron from the preceding layer have the max effect because they multiply by larger value
+so in short previous layers have more effect 
+
+Hebbian theory - fire together wire together
+
+so we can help in increasing the activation in last layer by changing all the activations in the previous layer (not actual activation we can change bias and weights to change activation). 
+
+IMP : Similar to weight changes, you are going to get the most bang for buck by seeking changes
+that are propotional to the size of the corresponding weights 
+increase wi ---> in propotion to ai
+change ai ---> in propotion to wi 
+
+so we add all the desire like what should happend and we add them, so we can decide how much neuron needs to be change
+so as we move backward to decide the list of nudges that we want to happen from the second layer to last year
+that is called propogate backwards
+
+so to train properly we record how each of them would like to change the weights and biases and average together the desired changes
+
+This collection here of the averaged nudges to each weight and bias is negative gradient propotional to it
+
+
+#**********************************************************************************************************#
+stochastic gradient descent
+
+so it takes lot of time to do this for each gradient and exteeme computational memory
+so what we do is randomly shuffle training data and then divide it into the whole mini batches with let say 100 example
+
+computer gradient descet step on each batch using backdrop
+
+
+#***********************************************************************************************#
+Summary
+
+Back propogation - is the algorithm for determining how a single training example would like to nudge the weight and biases 
+not just up or down but in relative proportions to those changes cause the rapid decrease in the cost
+
+a true step is to do all the steps for all the training examples and average it.
+so we randomly divide in mini batch
+
+and doing that batch same thing is called stochastic gradient descent 

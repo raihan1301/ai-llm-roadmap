@@ -1,0 +1,53 @@
+even pixel is less still we recognize the number because of our sensitive sensitive
+
+we put the neural network to understand the number, so we start with plain vanilla (multilayer preception)
+Neurons :  thing that holds a number
+
+so for 28 x 28 pixel image which will be 784 neurons in total
+each neuron will hold a value of corresponding pixel from 0 to 1 like 0.1, 0.23, 0.45 etc 1 means white 0 mean black
+
+inside the number is activation, so high number activation becomes light and this neurons become top layer
+we can have hidden layers and the last year will represent the number we want
+
+hidden layers can have neurons whatever we decide it is arbitary
+activation in one layer determine the activation in next layer
+
+what are we expecting ?
+for example 9 has loop on top and line 
+8 has one loop on top and one loop in bottom
+7 has one line on top and one line in vertical
+so this particular expresion are matched
+
+another example involves taking raw audio and picking out distinct sounds, combine to syllabus and than words and than phrase etc.
+
+so how they determine which one is relevant?
+so we assign the weights to each one of the connection between two neurons
+than we take all the activations and multiply with their weights
+example w1a1 + w2a2 + wnan  there can be positive weights and negative weights
+
+now we want the function to be in between the 0 and 1 and hence we need to use a function
+the function name is sigmoid sigmoid(x) = 1/1+e^-x
+this also known an logistic curve : this will determine how positive is this ?
+
+now we want the it should light up the pickels only when weighted sum is more than certain number
+that certain number is called bias for inactivity like negative 10 to weighted sum that -10 is bias
+
+so weight tells you what pixel patter this neuron in the second layer
+bias tells how high weighted sum to be before activating the neuron
+
+so from our 1st example of 784 pixel it will be 784 * 16 weights and 16 biases
+this is just the connection from first layer to second than it keep increase in 3rd layers
+so with 2 hidden layers it becomes 784 * 16 + 16 * 16 + 16 * 10 weights and 16+ 16 + 10 biases so it is 13002 different ways
+
+so if the network does work but it is not doing or not giving result as expected, it means to challenge our assumption by digging into weights and biases
+
+so now in a better waysorganize all the activations from one layer into a column as vector
+than all the weights as an matrix
+than matrix product is our number but we can add a bias and than use the sigmoid function
+
+so neuron is like a function
+
+in short sigmoid function - early networks use to squish the relevant weighted sum interval between 0 and 1
+but it is old school and hardly andyone use it
+
+now we use ReLU stands for rectified linear unit ReLU(a) = max(0,a)
