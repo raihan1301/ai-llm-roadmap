@@ -13,7 +13,7 @@ class Student_Class(Wizard_Class):
 
 class Professor_Class(Wizard_Class):
     def __init__(self, name, subject):
-        super().__init__(name)
+        super().__init__(name)  #name value pass to parent and now self.name is Robin and can be access anywhere
         self.subject = subject 
 
 

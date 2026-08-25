@@ -1,0 +1,11 @@
+name,email,phone,company,stage
+John Smith,john@example.com,5195551234,Secure North,Qualified
+Sara Khan,sara@example.com,4165559876,CleanPro,New
+Mike Brown,mike@example.com,6475554567,Staffing Plus,Proposal
+Anna Lee,anna@example.com,9055551111,EventWorks,Qualified
+David Chen,david@example.com,2265552222,NorthStar,New
+John Duplicate,john@example.com,4375553333,Secure North,Qualified
+Phone Duplicate,phone@example.com,5195551234,West Guard,Proposal
+Bad Email,bad-email,4165554444,Broken Corp,New
+Missing Company,nocompany@example.com,6475555555,,Qualified
+Missing Stage,nostage@example.com,9055556666,StageLess Inc,

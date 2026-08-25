@@ -1,0 +1,60 @@
+async def : 
+Defines an asynchronous function. Calling it usually creates a coroutine. If it contains yield, it creates an async generator.
+
+asyncio.run() :
+Starts the async event loop and runs one main coroutine until it finishes.
+
+await : 
+Pause the current coroutine until another async operation finishes, while allowing other tasks to run.
+“I cannot continue until this async work finishes.”
+
+asyncio.gather() :
+Start multiple coroutines concurrently, wait for all of them, and collect their results.
+
+yield :
+Give one value to the caller, pause the generator, and continue from that point when the caller asks for the next value.
+“Here is one value. Pause me until you ask for the next one.”
+yield creates values one by one.
+
+async for :
+Receive values one by one from an async generator.
+for receives values from a normal generator.
+async for receives values from an async generator.
+
+asyncio.get_event_loop():
+“Give me the event loop that manages async tasks.”
+this is same as asyncio.run()
+
+asyncio.create_task():
+Take this coroutine and schedule it to run as an independent async task
+to schedule the execution of a coroutine object, followed by the usual call to the asyncio.run()
+
+asyncio.as_completed:
+function uses asyncio.as_completed(), which yields tasks in the order they complete, not in the order they were started.
+the faster task (task1) finishes first and its result is printed earlier, while the longer task (task2) completes and prints afterward. 
+
+/************************************************************************************************/
+
+The iteration itself is still sequential unless you introduce concurrency by using asyncio.gather().
+
+/************************************************************************************************/
+
+coroutine = coro([10, 5, 2])
+“Here is some async work that could be executed.”
+
+task = asyncio.create_task(coroutine)
+“Schedule that async work on the event loop and track its execution.”
+
+/************************************************************************************************/
+
+gather(..., return_exceptions=True)
+= run everything and return errors inside the results list
+
+isinstance(result, Exception)
+= check whether this result is actually an error
+
+ExceptionGroup
+= combine multiple errors into one grouped error
+
+except*
+= handle errors contained inside an ExceptionGroup

@@ -1,0 +1,112 @@
+run the command from the VS Code terminal while you are inside your ai-llm-roadmap folder, but the important part is this:
+
+setx OPENAI_API_KEY ... does not save the key inside that folder.
+
+It saves the variable at the Windows user environment level. 
+OpenAI’s own guidance describes environment variables as values set on the operating system rather than inside your application code.
+
+Below example
+Windows
+│
+├── Environment Variables
+│      OPENAI_API_KEY = sk-xxxxxxxx
+│
+├── D:\AI LLM\ai-llm-roadmap
+│      └── smartops-ai
+│          └── openai_test.py
+│
+├── D:\SmartOps
+│      └── another_python_file.py
+│
+└── Other folders...
+
+Your key is stored here: Windows Environment Variables
+
+so in any folder if you run this "setx OPENAI_API_KEY "your-key-here""
+That's perfectly fine. The folder you're currently in doesn't matter for setx.
+
+Then in your new VS Code PowerShell terminal: echo $env:OPENAI_API_KEY , it should print your api key
+
+/*******************************************************************************************************************/
+
+What does OpenAI SDK mean?
+SDK = Software Development Kit. example pip install openai 
+if we do not use this than we have to write http, authentication, convert json etc
+The SDK is the tool your Python uses to communicate. The backend/server can be different.
+
+What are client, response, and output_text?
+client is the Python object you use to communicate with the API. 
+It knows things like: Which API server? Which API key? How should requests be sent?
+The response contains more than just the generated sentence—it is a structured object.
+output_text : This gives you the convenient generated text portion of the returned response.
+
+chat.completions.create() vs responses.create() ?
+Both send requests to an LLM. Responses API is the newer API OpenAI recommends for new projects, while Chat Completions continues to be supported.
+
+old example
+completion = client.chat.completions.create(
+    model="...",
+    messages=[
+        {
+            "role": "user",
+            "content": "Explain SmartOps."
+        }
+    ]
+)
+
+print(completion.choices[0].message.content)
+
+new example:
+response = client.responses.create(
+    model="...",
+    input="Explain SmartOps."
+)
+
+print(response.output_text)
+
+What does OpenAI() do, and what does client.responses.create() do?
+OpeAi() = This creates an OpenAI client object.
+OpenAI's Python examples construct this client before calling the API. pick from environment
+But for our Bedrock setup we tell the api key and base url
+
+client.responses.create(...) = actually makes the API request.
+ 
+ /***********************************************************************/
+
+ 1. Create/configure client
+        ↓
+   client = OpenAI(...)
+
+
+2. Send request
+        ↓
+   client.responses.create(...)
+
+
+3. API/model processes input
+        ↓
+
+
+4. API returns data
+        ↓
+   response
+
+
+5. Extract generated text
+        ↓
+   response.output_text
+
+/**********************************************************************************/
+
+OpenAI, Anthropic and Google primarily create AI models; AWS Bedrock and Groq can act as platforms that host/run models created by those companies.
+Claude is Anthropic's model family; Sonnet/Fable/etc. are Claude models. Gemini is Google's model family. GPT is OpenAI's model family.
+
+/**********************************************************************************/
+
+normal English words. The text is converted into smaller units called tokens, which are then represented internally as numbers. 
+OpenAI describes tiktoken as a fast BPE tokenizer for its models.
+
+Tokens determine:
+- how much text fits in the model's context
+- roughly how much an API call costs
+- how much input/output the model processed
