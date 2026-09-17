@@ -1,0 +1,187 @@
+Function calling : also known as tool calling, provides a powerful and flexible way for OpenAI models to interface with external systems 
+    and access data outside their training data
+    IF application has many function which rarely used, we can pair function calling with tool search to load only when needed.
+
+Function or tool means a piece of functionality that we tell the model it has access to
+    for example we can give model access to location, account details for certain users, issue refunds for a lost order
+
+so when we make API request to model with prompt, we can include list of tools or function which model could consider to give answer
+    For example, if we wanted the model to be able to answer questions about the current weather somewhere in the world, 
+    we might give it access to a get_weather tool that takes location as an argument.
+
+Tool calls : request from model to use the tool : meaning if model wants to call a tool to answer specific thing that we made it available
+    model receives a prompt like “what is the weather in Paris?” in an API request, it could respond to that prompt with a 
+    tool call for the get_weather tool, with Paris as the location argument.
+
+Tool call Output : response a tool generate using the input from a models tool call : it can be structured JSON or plain text
+    and it will contain a refrence to specific model tool call by call_id, see the example below
+        The model has access to a get_weather tool that takes location as an argument.
+        In response to a prompt like “what’s the weather in Paris?” the model returns a tool call that contains a location argument 
+            with a value of Paris
+        The tool call output might return a JSON object (e.g., {"temperature": "25", "unit": "C"}, indicating a current temperature of 
+            25 degrees), Image contents, or File contents.
+        We then send all of the tool definition, the original prompt, the model’s tool call, and the tool call output back to the model to 
+            finally receive a text response like: The weather in Paris today is 25C.
+
+Function Versus tools : A function is a specific kind of tool, defined by a JSON schema
+    A function definition allows the model to pass data to your application, where your code can access data or take actions 
+        suggested by the model., there are custom tools with free text input and output, built in tools and can access the MCP Server
+
+The tool calling flow :Tool calling is a multi-step conversation between your application and a model
+    1. Make a request to the model with tools it could call
+    2. Receive a tool call from the model
+    3. Execute code on the application side with input from the tool call
+    4. Make a second request to the model with the tool output
+    5. Receive a final response from the model (or more tool calls)
+
+Function tool Example : see horoscope.py week on 8 
+
+
+/**************************************************************************************************************/
+Defining Functions : Function usually declared in the tools parameters of each API request
+    each callable function uses the same schema shape. A function definition has the following properties:
+        1. type : This should always be function
+        2. name : The function’s name (e.g. get_weather)
+        3. description : Details on when and how to use the function
+        4. parameters : JSON schema defining the function’s input arguments
+        5. strict :  Whether to enforce strict mode for the function call
+
+    see the example in json_example.txt 
+
+Tip : Because the parameters are defined by a JSON schema, you can leverage many of its rich features 
+    like property types, enums, descriptions, nested objects, and, recursive objects.
+
+
+/*************************************************************************************************************/
+Defining namespaces : Use namespaces to group related tools by domain, such as crm, billing, or shipping
+    useful when the model must choose between tools that serve different systems or purposes, such as one search tool for your CRM and 
+    another for your support ticketing system.
+see the example in json_example.txt 
+
+
+/*************************************************************************************************************/
+Tool Search : If you need to give the model access to a large ecosystem of tools, defer the loading some or all of those tools with tool_search
+    The tool_search tool lets the model search for relevant tools, add them to the model context, and then use them
+
+Best practices for defining functions :
+    1. Write clear and detailed function names, parameter descriptions, and instructions.
+        Explicitly describe the purpose of the function and each parameter (and its format), and what the output represents.
+        Use the system prompt to describe when (and when not) to use each function
+        Include examples and edge cases. (Note: Adding examples may hurt performance for reasoning models.)
+        For deferred tools, put detailed guidance in the function description and keep the namespace description concise.
+    
+    2. Apply software engineering best practices.
+        Make the functions obvious and intuitive.
+        Use enums and object structure to make invalid states unrepresentable. (e.g. toggle_light(on: bool, off: bool) allows for invalid calls)
+        Pass the intern test. Can an intern/human correctly use the function given nothing but what you gave the model?
+
+    3. Offload the burden from the model and use code where possible.
+        Don’t make the model fill arguments you already know. if you already have an order_id based on a previous menu : than
+            don’t have an order_id param – instead, have no params submit_refund() and pass the order_id with code.
+        Combine functions that are always called in sequence : if you always call mark_location() after query_location(), 
+            just move the marking logic into the query function call.
+
+    4. Keep the number of initially available functions small for higher accuracy.
+        Evaluate your performance with different numbers of functions.
+        Aim for fewer than 20 functions available at the start of a turn at any one time, though this is just a soft suggestion.
+        Use tool search to defer large or infrequently used parts of your tool 
+
+    5. Leverage AI resources
+        Generate and iterate on function schemas 
+        Consider fine-tuning to increase function calling accuracy for large numbers of functions or difficult tasks.
+
+Token Usage : functions are injected into the system message in a syntax the model has been trained on
+    this means the callable function count as an input token and model context limit. so if there is token usuage error
+        shorten the description, load less function upfront when possible, you can also fine tune to reduce the no of tokens used.
+
+
+/************************************************************************************************************/
+Handling function calls : When the model calls a function, you must execute it and return the result. Always assume there are several calls
+    The response output array contains an entry with the type having a value of function_call. 
+    Each entry with a call_id (used later to submit the function result), name, and JSON-encoded arguments.
+    example in json_example.txt
+
+If you are using tool search, you may also see tool_search_call and tool_search_output items before a function_call
+    Once the function is loaded, handle the function call in the same way shown here.
+
+Formatting results : The result you pass in the function_call_output message should typically be a string, where the format is up to user
+    it can be json, error codes, plain text, ecosystem
+    For functions that return images or files, you can pass an array of image or file objects instead of a string.
+    If your function has no return value (e.g. send_email), simply return a string that indicates success or failure. (e.g. "success")
+
+Incorporating results into response : After appending the results to your input, you can send them back to the model to get a final response.
+
+IMP : whole example for handling function calls is in week 08 
+
+
+/***************************************************************************************************/
+Additional configurations
+
+Tool choice : we can force specific behavior with the tool_choice parameter.
+    1. Auto: (Default) Call zero, one, or multiple functions. tool_choice: "auto"
+    2. Required: Call one or more functions. tool_choice: "required"
+    3. Forced Function: Call exactly one specific function. tool_choice: {"type": "function", "name": "get_weather"}
+    4. Allowed tools: Restrict the tool calls the model can make to a subset of the tools available to the model.
+TIP : use allowed_tools when you want to make only a subset of tools available across model requests, but not modify the list of tools you pass
+    see example in json_example.txt
+    You can also set tool_choice to "none" to imitate the behavior of passing no functions.
+
+Parallel function calling : The model may choose to call multiple functions in a single turn. 
+    You can prevent this by setting parallel_tool_calls to false, which ensures exactly zero or one tool is called.
+
+Strict Mode : Setting strict to true will ensure function calls reliably adhere to the function schema
+    There are couple of requirements which needs to be add to make strict works perfectly
+    1. additionalProperties must be set to false for each object in the parameters
+    2. All fields in properties must be marked as required. You can denote optional fields by adding null as a type option
+IMP : if strict is true and schema not meet the requirements above, request will be rejected with details about missing constraints
+    if we do not put strict requirements so model response always send back wheter strict mode was followed or not. 
+    both example in json_example.txt (strict enabled and disabaled) : but rememeber some json schema not supported under strict
+
+
+/**************************************************************************************************/
+Streaming : Streaming can be used to surface progress by showing which function is called as the model fills its arguments, 
+    and even displaying the arguments in real time. 
+    streamining functin calls very similar to streaming regular responses: you set stream to true and get different event objects.
+    Instead of single content we get encoded arguments json object
+
+response.output_item.addedd : will be emitted for each function and that will have following filelds
+    response_id	: The id of the response that the function call belongs to
+    output_index : The index of the output item in the response. This represents the individual function calls in the response.
+    item : The in-progress function call item that includes a name, arguments and id field
+
+than you will receive a series of events of type response.function_call_arguments.delta which will contain the delta of the arguments field. 
+    response_id	: The id of the response that the function call belongs to
+    item_id	: The id of the function call item that the delta belongs to
+    output_index : The index of the output item in the response. This represents the individual function calls in the response.
+    delta : The delta of the arguments field.
+
+When the model has finished calling the functions an event of type response.function_call_arguments.done will be emitted. 
+    This event contains the entire function call including the following fields:
+    response_id : The id of the response that the function call belongs to
+    output_index : The index of the output item in the response. This represents the individual function calls in the response.
+    item : The function call item that includes a name, arguments and id field.
+
+
+/***************************************************************************************************************/
+Custom Tools: it is the same way as json but insted of explicit instruction, model can pass arbitary string back to tool as input
+
+Context-free grammars (CFG) : set of rules , how to producte valid text in given format
+    custom CFG using the grammar parameter when config a custom tools, there are two types Lark and regex
+
+Lark CFG : Grammars are specified using a variation of Lark
+    Example of lark CFG can be found in json_examples.txt
+    Keep grammars simple : it can return error if the grammar is complex, complex grammar need iteration on defination itself
+    Correct versus incorrect patterns : single, bounded terminal 
+
+Regex CFG : Pattern must be on one line and Provide the regex as a plain pattern string
+
+"IMP TIP":
+authentication
+model selection
+messages/input
+structured output
+tool calling
+streaming
+error handling
+cost/latency
+

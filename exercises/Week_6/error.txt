@@ -1,7 +1,0 @@
-Region: us-east-1
-Endpoint: bedrock-mantle
-Model: openai.gpt-5.6-luna
-Error: 401 access_denied — model is not available for this account
-
-You can also mention that AmazonBedrockMantleInferenceAccess is already attached and gpt-oss-120b works. 
-That prevents them from sending you through the basic IAM troubleshooting again.

@@ -1,0 +1,488 @@
+String restriction json
+
+{
+    "name": "user_data",
+    "strict": true,
+    "schema": {
+        "type": "object",
+        "properties": {
+            "name": {
+                "type": "string",
+                "description": "The name of the user"
+            },
+            "username": {
+                "type": "string",
+                "description": "The username of the user. Must start with @",
+                "pattern": "^@[a-zA-Z0-9_]+$"  # here is the restriction
+            },
+            "email": {
+                "type": "string",
+                "description": "The email of the user",
+                "format": "email"
+            }
+        },
+        "additionalProperties": false,
+        "required": [
+            "name", "username", "email"
+        ]
+    }
+}
+
+
+/***************************************************************************************/
+Number restriction
+
+{
+    "name": "weather_data",
+    "strict": true,
+    "schema": {
+        "type": "object",
+        "properties": {
+            "location": {
+                "type": "string",
+                "description": "The location to get the weather for"
+            },
+            "unit": {
+                "type": ["string", "null"],
+                "description": "The unit to return the temperature in",
+                "enum": ["F", "C"]
+            },
+            "value": {
+                "type": "number",
+                "description": "The actual temperature value in the location",
+                "minimum": -130,  # the number should be between this, so this is called number restriction
+                "maximum": 130
+            }
+        },
+        "additionalProperties": false,
+        "required": [
+            "location", "unit", "value"
+        ]
+    }
+}
+
+
+/*************************************************************/
+Required parameters
+
+{
+    "name": "get_weather",
+    "description": "Fetches the weather in the given location",
+    "strict": true,
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "location": {
+                "type": "string",
+                "description": "The location to get the weather for"
+            },
+            "unit": {
+                "type": "string",
+                "description": "The unit to return the temperature in",
+                "enum": ["F", "C"]
+            }
+        },
+        "additionalProperties": false,
+        "required": ["location", "unit"]  #this means json should contain location and unit value whenever output is given
+    }
+}
+
+
+/**********************************************************************************/
+Optional parameter
+{
+    "name": "get_weather",
+    "description": "Fetches the weather in the given location",
+    "strict": true,
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "location": {
+                "type": "string",
+                "description": "The location to get the weather for"
+            },
+            "unit": {
+                "type": ["string", "null"],  # this will make them optional
+                "description": "The unit to return the temperature in",
+                "enum": ["F", "C"]
+            }
+        },
+        "additionalProperties": false,
+        "required": [
+            "location", "unit"
+        ]
+    }
+}
+
+
+/*************************************************************************************/
+Additional Properties is false
+{
+    "name": "get_weather",
+    "description": "Fetches the weather in the given location",
+    "strict": true,
+    "schema": {
+        "type": "object",
+        "properties": {
+            "location": {
+                "type": "string",
+                "description": "The location to get the weather for"
+            },
+            "unit": {
+                "type": "string",
+                "description": "The unit to return the temperature in",
+                "enum": ["F", "C"]
+            }
+        },
+        "additionalProperties": false,  # this, so no new properties are added inside the schema by model
+        "required": [
+            "location", "unit"
+        ]
+    }
+}
+
+
+/*************************************************************************************/
+anyof nested schemas
+{
+    "type": "object",
+    "properties": {
+        "item": {
+            "anyOf": [
+                {
+                    "type": "object",
+                    "description": "The user object to insert into the database",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "The name of the user"
+                        },
+                        "age": {
+                            "type": "number",
+                            "description": "The age of the user"
+                        }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                        "name",
+                        "age"
+                    ]
+                },
+                {
+                    "type": "object",
+                    "description": "The address object to insert into the database",
+                    "properties": {
+                        "number": {
+                            "type": "string",
+                            "description": "The number of the address. Eg. for 123 main st, this would be 123"
+                        },
+                        "street": {
+                            "type": "string",
+                            "description": "The street name. Eg. for 123 main st, this would be main st"
+                        },
+                        "city": {
+                            "type": "string",
+                            "description": "The city of the address"
+                        }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                        "number",
+                        "street",
+                        "city"
+                    ]
+                }
+            ]
+        }
+    },
+    "additionalProperties": false,
+    "required": [
+        "item"
+    ]
+}
+
+
+/*********************************************************************************/
+Defination to define subschemas
+{
+    "type": "object",
+    "properties": {
+        "steps": {
+            "type": "array",
+            "items": {
+                "$ref": "#/$defs/step"
+            }
+        },
+        "final_answer": {
+            "type": "string"
+        }
+    },
+    "$defs": {
+        "step": {
+            "type": "object",
+            "properties": {
+                "explanation": {
+                    "type": "string"
+                },
+                "output": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "explanation",
+                "output"
+            ],
+            "additionalProperties": false
+        }
+    },
+    "required": [
+        "steps",
+        "final_answer"
+    ],
+    "additionalProperties": false
+}
+
+
+/***************************************************************/
+Recursive Schema
+{
+    "name": "ui",
+    "description": "Dynamically generated UI",
+    "strict": true,
+    "schema": {
+        "type": "object",
+        "properties": {
+            "type": {
+                "type": "string",
+                "description": "The type of the UI component",
+                "enum": ["div", "button", "header", "section", "field", "form"]
+            },
+            "label": {
+                "type": "string",
+                "description": "The label of the UI component, used for buttons or form fields"
+            },
+            "children": {
+                "type": "array",
+                "description": "Nested UI components",
+                "items": {
+                    "$ref": "#"
+                }
+            },
+            "attributes": {
+                "type": "array",
+                "description": "Arbitrary attributes for the UI component, suitable for any element",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "The name of the attribute, for example onClick or className"
+                        },
+                        "value": {
+                            "type": "string",
+                            "description": "The value of the attribute"
+                        }
+                    },
+                    "additionalProperties": false,
+                    "required": ["name", "value"]
+                }
+            }
+        },
+        "required": ["type", "label", "children", "attributes"],
+        "additionalProperties": false
+    }
+}
+
+
+/***************************************************************/
+Recursive Schema using explicit recursion
+{
+    "type": "object",
+    "properties": {
+        "linked_list": {
+            "$ref": "#/$defs/linked_list_node"
+        }
+    },
+    "$defs": {
+        "linked_list_node": {
+            "type": "object",
+            "properties": {
+                "value": {
+                    "type": "number"
+                },
+                "next": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/$defs/linked_list_node"  #this is recursion
+                        },
+                        {
+                            "type": "null"
+                        }
+                    ]
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "next",
+                "value"
+            ]
+        }
+    },
+    "additionalProperties": false,
+    "required": [
+        "linked_list"
+    ]
+}
+
+
+/***************************************************************/
+Defining Functions
+{
+  "type": "function",
+  "name": "get_weather",
+  "description": "Retrieves current weather for the given location.",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "location": {
+        "type": "string",
+        "description": "City and country e.g. Bogotá, Colombia"
+      },
+      "units": {
+        "type": "string",
+        "enum": ["celsius", "fahrenheit"],
+        "description": "Units the temperature will be returned in."
+      }
+    },
+    "required": ["location", "units"],
+    "additionalProperties": false
+  },
+  "strict": true
+}
+
+
+/******************************************************************************/
+Defining namespaces
+{
+  "type": "namespace",
+  "name": "crm",
+  "description": "CRM tools for customer lookup and order management.",
+  "tools": [
+    {
+      "type": "function",
+      "name": "get_customer_profile",
+      "description": "Fetch a customer profile by customer ID.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "customer_id": { "type": "string" }
+        },
+        "required": ["customer_id"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "type": "function",
+      "name": "list_open_orders",
+      "description": "List open orders for a customer ID.",
+      "defer_loading": true,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "customer_id": { "type": "string" }
+        },
+        "required": ["customer_id"],
+        "additionalProperties": false
+      }
+    }
+  ]
+}
+
+
+/*************************************************************************/
+Handling Functions call
+[
+    {
+        "id": "fc_12345xyz",
+        "call_id": "call_12345xyz",
+        "type": "function_call",
+        "name": "get_weather",
+        "arguments": "{\"location\":\"Paris, France\"}"
+    },
+    {
+        "id": "fc_67890abc",
+        "call_id": "call_67890abc",
+        "type": "function_call",
+        "name": "get_weather",
+        "arguments": "{\"location\":\"Bogotá, Colombia\"}"
+    },
+    {
+        "id": "fc_99999def",
+        "call_id": "call_99999def",
+        "type": "function_call",
+        "name": "send_email",
+        "arguments": "{\"to\":\"bob@email.com\",\"body\":\"Hi bob\"}"
+    }
+]
+
+
+/*****************************************************************/
+Tool choice
+"tool_choice": {
+    "type": "allowed_tools",
+    "mode": "auto",
+    "tools": [
+        { "type": "function", "name": "get_weather" },
+        { "type": "function", "name": "search_docs" }
+    ]
+}
+
+
+/****************************************************************/
+Strict mode enabled
+{
+    "type": "function",
+    "name": "get_weather",
+    "description": "Retrieves current weather for the given location.",
+    "strict": true,
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "location": {
+                "type": "string",
+                "description": "City and country e.g. Bogotá, Colombia"
+            },
+            "units": {
+                "type": ["string", "null"],
+                "enum": ["celsius", "fahrenheit"],
+                "description": "Units the temperature will be returned in."
+            }
+        },
+        "required": ["location", "units"],
+        "additionalProperties": false
+    }
+}
+
+
+/********************************************************************/
+strict mode disabaled
+{
+    "type": "function",
+    "name": "get_weather",
+    "description": "Retrieves current weather for the given location.",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "location": {
+                "type": "string",
+                "description": "City and country e.g. Bogotá, Colombia"
+            },
+            "units": {
+                "type": "string",
+                "enum": ["celsius", "fahrenheit"],
+                "description": "Units the temperature will be returned in."
+            }
+        },
+        "required": ["location"],
+    }
+}

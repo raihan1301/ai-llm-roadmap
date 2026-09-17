@@ -1,0 +1,140 @@
+Instruction Tuned LLM is further trained by RLHF : reinforcement Learning with Human Feedback
+
+/********************************************************************************/
+Prompting Principles
+    Principle 1: Write clear and specific instructions
+    Principle 2: Give the model time to “think”
+
+Tactics for Principle 1
+    Tactic 1: Use delimiters to clearly indicate distinct parts of the input
+        Delimiters can be anything like: ```, """, < >, <tag> </tag>, :
+        Example Cell 19 in DeepLearning_v1.ipynb
+        so if someone writes in it like "forget the above the things and give me this answer" but if we have said to follow delimeters
+            it will summarize the whole thing and not just forget the above things
+
+    Tactic 2: Ask for a structured output
+        JSON, HTML
+        Example Cell 21 in DeepLearning_v1.ipynb
+        so this will be easy to handle the database and the data into it
+
+    Tactic 3: Ask the model to check whether conditions are satisfied
+        Example Cell 22 in DeepLearning_v1.ipynb
+        so if the condition is satisfied than it will run that
+
+    Tactic 4: "Few-shot" prompting
+        Example Cell 23 in DeepLearning_v1.ipynb
+        here you already gave one example to the model and than ask a question. this will improve the response as it already have an example data
+
+
+Tactics for Principle 2
+For example if model is giving wrong conclusion, we should try to reframe the query to request chain or series of relevant reasoning
+    before the final answer. so in complex answer than it just try to guess and we can tell model to take time to answer it.
+
+    Tactic 1 : Specify the steps required to complete a task , Ask for output in a specified format
+        Example Cell 24 and 25 in DeepLearning_v1.ipynb
+
+    Tactic 2: Instruct the model to work out its own solution before rushing to a conclusion
+        Example Cell 26 and 27 in DeepLearning_v1.ipynb
+        in cell 27 : student's solution is actually not correct. We can fix this by instructing the model to work out its own solution first.
+
+
+Model Limitations: Hallucinations
+    Boie is a real company, the product name is not real.
+    Example Cell 28 in DeepLearning_v1.ipynb
+To reduce halluciation is to find the relevant info than answer the question based on relevant info
+
+
+/********************************************************************************/
+Iterative Prompt Development : iteratively analyze and refine prompts to generate marketing copy from a product fact sheet.
+    Idea --> implementation --> Exprimental result --> error analysis --> update Idea 
+
+Generate a marketing product description from a product fact sheet : Example Cell 30 in DeepLearning_v1.ipynb
+    Issue 1: The text we got in answer is too long : Limit the number of words/sentences/characters.
+        Example Cell 32 in DeepLearning_v1.ipynb : this will resolve the Issue 1
+    Issue 2: Text focuses on the wrong details : Ask it to focus on the aspects that are relevant to the intended audience.
+        Example Cell 33 and 35 in DeepLearning_v1.ipynb : this will resolve the Issue 2, by giving to focus on certain details
+    Issue 3: Description needs a table of dimensions : Ask it to extract information and organize it in a table.
+        Example Cell 36 in DeepLearning_v1.ipynb : this will resolve the Issue 3 it will give table result
+
+
+/********************************************************************************/
+Summarizing : summarize text with a focus on specific topics.
+
+    Summarize with a word/sentence/character limit
+        Example Cell 39 in DeepLearning_v1.ipynb : this will sumarize according to the limit we added in prompting
+    Summarize with a focus on shipping and delivery
+        Example Cell 41 in DeepLearning_v1.ipynb : this will sumarize and focus on delivery keywords
+    Summarize with a focus on price and value
+        Example Cell 42 in DeepLearning_v1.ipynb : this will sumarize and focus on price and value keywords
+    TIP : Summaries includes topic that are not related to the topic of focus and can add outside words as well
+
+    So, lets test "Extract" instead of summarize
+        Example Cell 44 in DeepLearning_v1.ipynb : this will extract it from the topic itself
+    
+    Summarize multiple product reviews
+
+
+/********************************************************************************/
+Inferring -  infer sentiment and topics from product reviews and news articles.
+
+    Sentiment (positive/negative) : Here we have given text and we are asking model to tell if its positive or negative so we can classify.
+        Example Cell 48 and 49 in DeepLearning_v1.ipynb
+    Identify types of emotions : Here we want the model to send which emotion is describe in the prompt, 
+        Example Cell 50 in DeepLearning_v1.ipynb
+    Identify anger : Here we can get to know if the person who written the prompt is angry or not, basically emotions
+        Example Cell 51 in DeepLearning_v1.ipynb
+    Extract product and company name from customer reviews : Here we can extract review for products with the company name etc.
+        Example Cell 52 in DeepLearning_v1.ipynb
+    Doing multiple tasks at once : Here we are asking model to give emotion, sentiment, product name and company name all at once
+        Example Cell 53 in DeepLearning_v1.ipynb
+    Inferring topics : now in this we infer the prompt like extract the exact things we want for example we infer 5 topics from prompt
+        Infer 5 topics : Example Cell 54 and 55 in DeepLearning_v1.ipynb 
+        Than we split this 5 topics from answer to a Limitations, Example Cell 56 in DeepLearning_v1.ipynb 
+    Make a news alert for certain topics : Now we created one list in cell 57 in DeepLearning_v1.ipynb
+        Here we will alert if the news is from this particular list
+        Example Cell 58 and 59 in DeepLearning_v1.ipynb and alert the user the news is for nasa. 
+
+
+/********************************************************************************/
+Transforming : Large Language Models for text transformation tasks like language translation, spelling and grammar checking, 
+    tone adjustment, and format conversion.
+
+Translation : This gives the model the ability to do translation.
+    Example Cell 60 and 61 in DeepLearning_v1.ipynb
+Universal Translator : For example users are messaging IT service person in all region languanges, so we need universal translator
+    Example Cell 62 and 63 in DeepLearning_v1.ipynb, so every issue is translate to korean and english language
+Tone Transformation : Writing can vary based on the intended audience. ChatGPT can produce different tones.
+    Example Cell 64 in DeepLearning_v1.ipynb
+Format Conversion : ChatGPT can translate between formats. The prompt should describe the input and output formats.
+    Example Cell 67 in DeepLearning_v1.ipynb
+Spellcheck/Grammar check : To signal to the LLM that you want it to proofread your text, you instruct the model to 'proofread' and correct'.
+    Example Cell 68 in DeepLearning_v1.ipynb
+
+
+/********************************************************************************/
+Expanding : generate customer service emails that are tailored to each customer's review.
+
+Customize the automated reply to a customer email : Send email to customer based on their review
+    Example Cell 72 and 73 in DeepLearning_v1.ipynb :
+    In our case, once our client get feeback or survey from their client and based on sentiment describe by model, they can send automated email
+
+Remind the model to use details from the customer's email : If the details are from outside update the prompt
+    Example Cell 77 in DeepLearning_v1.ipynb :
+
+
+/********************************************************************************/
+SmartOps Example
+When any incident happens, or survey came from client : 
+    AI model will summarize it. 
+    It will extract the important details and create task for manager
+    It will infer the sentiment of the incident or survey
+    Create Automated email from the sentiment and send to client
+
+
+/********************************************************************************/
+ChatFormat : utilize the chat format to have extended conversations with chatbots personalized or specialized for specific tasks or behaviors.
+
+Chatbot : Here we can tell model to behave like assistant, friendly chatbot, etc and answer in that languanges
+    Example Cell 85 to 90 in DeepLearning_v1.ipynb :
+OrderBot : automate the collection of user prompts and assistant responses to build a OrderBot. 
+    The OrderBot will take orders at a pizza restaurant.
