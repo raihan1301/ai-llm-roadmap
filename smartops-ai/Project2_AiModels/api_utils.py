@@ -26,7 +26,19 @@ def call_llm(system, user, backend) -> str:
         response = client.responses.create(
             model = os.getenv(model),
             instructions = system,   
-            input = user
+            input=[
+                {
+                    "role": "developer",
+                    "content": system
+                },
+                {
+                    "role": "user",
+                    "content": user
+                }
+            ],
+            reasoning={
+                "effort": "low"
+            },
         )
 
         return response.output_text
