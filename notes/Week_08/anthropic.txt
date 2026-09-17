@@ -1,0 +1,166 @@
+Chapter 1: Basic Prompt Structure
+
+Claude using the Messages API requires the following parameters:
+    model: the API model name of the model that you intend to call
+    max_tokens: the maximum number of tokens to generate before stopping
+    messages: an array of input messages. Our models are trained to operate on alternating user and assistant
+    Each input message must be an object with a role and content.
+    system: the system prompt
+    temperature: the degree of variability in Claude's response.
+IMP : user and assistant messages MUST alternate, and messages MUST start with a user turn. 
+
+System Prompts : You can also use system prompts. A system prompt is a way to provide context, instructions, and guidelines to Claude 
+    before presenting it with a question or task in the "User" turn.
+
+A well-written system prompt can improve Claude's performance in a variety of ways, such as increasing Claude's ability to follow rules 
+    and instructions.
+
+
+/***********************************************************************************************/
+Chapter 2: Being Clear and Direct
+
+more you explain exactly what you want in a straightforward manner to Claude, the better and more accurate Claude's response will be.
+    " When in doubt, follow the Golden Rule of Clear Prompting: Show your prompt to a colleague or friend , if they can do it, claude will
+
+
+/*********************************************************************************************/
+Chapter 3: Assigning Roles (Role Prompting)
+
+prompt Claude to inhabit a specific role (including all necessary context). This is also known as role prompting.
+    The more detail to the role context, the better.
+Priming Claude with a role can improve Claude's performance in a variety of fields, from writing to coding to summarizing
+Role prompting can also change the style, tone, and manner of Claude's response.
+
+Tip : Role prompting can happen either in the system prompt or as part of the User message turn.
+Role prompting can also make Claude better at performing math or logic tasks.
+
+
+/*******************************************************************************************/
+Chapter 4: Separating Data and Instructions
+
+bore to write full prompts, but instead want prompt templates that can be modified later with additional input data before submitting to Claude.
+    meaning claude is doing same thing but the data is different each time.
+separating the fixed skeleton of the prompt from variable user input, then substituting the user input into the prompt 
+    before sending the full prompt to Claude.
+prompt templates simplify repetitive tasks, Example third party have to just fill the blanks and not write the full prompt
+
+TIP : We do this substitution here using variables and f-strings, but you can also do it with the format() method.
+    make sure Claude knows where variables start and end. to solve this Wrap the input in XML tags! <tag> </tag>
+
+
+/****************************************************************************************/
+Chapter 5: Formatting Output and Speaking for Claude
+
+Claude can format its output in a wide variety of ways. 
+One of these ways is by using XML tags to separate out the response from any other superfluous text
+you can also ask Claude to use XML tags to make its output clearer and more easily understandable to humans.
+
+Note : XML tags allows the end user to reliably get the poem and only the poem by writing a short program 
+    to extract the content between XML tags.
+
+An extension of this technique is to **put the first XML tag in the assistant turn
+When you put text in the assistant turn, you're basically telling Claude that Claude has already said something, 
+    and that it should continue from that point onward. This technique is called "speaking for Claude" or "prefilling Claude's response."
+
+TIP : Claude also excels at using other output formatting styles, notably JSON. If you want to enforce JSON output 
+    (not deterministically, but close to it), you can also prefill Claude's response with the opening bracket, {}.
+
+Bonus lesson : If you are calling Claude through the API, you can pass the closing XML tag to the stop_sequences parameter 
+    to get Claude to stop sampling once it emits your desired tag.
+    This can save money and time-to-last-token by eliminating Claude's concluding remarks
+
+
+/********************************************************************************************/
+Chapter 6: Precognition (Thinking Step by Step)
+If someone start asking question fast without you think, you will not do good
+Giving Claude time to think step by step sometimes makes Claude more accurate, particularly for complex tasks.
+Note : However, thinking only counts when it's out loud. You cannot ask Claude to think but output only the answer - 
+    in this case, no thinking has actually occurred. 
+
+TIP :  allow Claude to think things out first before answering. We do that by literally spelling out the steps that Claude should take in order 
+    to process and think through its task. Along with a dash of role prompting, this empowers Claude to understand the review more deeply
+    
+Remember claude is sensitive to ordering, so if we change the order, claude response can be changed.
+Also claude most likely to choose second option if it given to him, because of internet data where claude is actually trained
+
+Note : Letting Claude think can shift Claude's answer from incorrect to correct.
+
+
+/***************************************************************************************************/
+Chapter 7: Using Examples (Few-Shot Prompting)
+Giving Claude examples of how you want it to behave (or how you want it not to behave) is extremely effective for:
+    Getting the right answer
+    Getting the answer in the right format
+
+Note : This sort of prompting is also called "few shot prompting". You might also encounter the phrase "zero-shot" or "n-shot" or "one-shot". 
+    The number of "shots" refers to how many examples are used within the prompt.
+
+Tip : we could walk Claude step by step through a set of formatting instructions on how to extract names and professions and then format them 
+    exactly the way we want, or we could just provide Claude with some correctly-formatted examples and Claude can extrapolate from there.
+
+
+/******************************************************************************************/
+Chapter 8: Avoiding Hallucinations
+
+Claude sometimes "hallucinates" and makes claims that are untrue or unjustified
+there are techniques you can use to minimize hallucinations. Below, we'll go over a few of these techniques, namely:
+    Giving Claude the option to say it doesn't know the answer to a question
+    Asking Claude to find evidence before answering
+    Note : there are many methods to avoid hallucinations
+
+Solution : 
+tell Claude that it's OK for it to decline to answer, or to only answer if it actually knows the answer with certainty.
+great way to reduce hallucinations on long documents is to make Claude gather evidence first.
+
+IMP : Sometimes, Claude's hallucinations can be solved by lowering the temperature of Claude's responses
+    Temperature is a measurement of answer creativity between 0 and 1, with 1 being more unpredictable and less standardized, 
+        and 0 being the most consistent.
+
+Asking Claude something at temperature 0 will generally yield an almost-deterministic answer set across repeated trials 
+Asking Claude something at temperature 1 (or gradations in between) will yield more variable answers
+
+
+/**********************************************************************************************/
+Chapter 9: Complex Prompts from Scratch
+guided structure for complex prompts. Note: Not all prompts need every element of the following complex structure
+TIP :  It is usually best to use many prompt elements to get your prompt working first, then refine and slim down your prompt afterward.
+
+Note :Prompts within the legal profession can be quite complex due to the need to:
+    Parse long documents
+    Deal with complex topics
+    Format output in very specific ways
+    Follow multi-step analytical processes
+
+
+/************************************************************************************************/
+Chapter 10: 
+
+Chaining Prompts : Claude can often improve the accuracy of its response when asked to do so
+    There are many ways where we can tell claude to check its own work
+use substitution to do what we call "function calling," which is asking Claude to perform some function, 
+    and then taking the results of that function and asking Claude to do even more afterward with the results
+
+Tool Use : tool use, a.k.a. function calling, is actually quite simple. for examples
+    1. Output the tool name and arguments it wants to call
+    2. Halt any further response generation while the tool is called
+    3. Then we reprompt with the appended tool results
+
+ it expands Claude's capabilities and enables Claude to handle much more complex, multi-step tasks
+    Example : calculator, Weather API, SQL database query
+
+You can get Claude to do tool use by combining these two elements:
+    A system prompt, in which we give Claude an explanation of the concept of tool use as well as a detailed descriptive list of the tools 
+    The control logic with which to orchestrate and execute Claude's tool use requests
+
+TIP : This part of the system prompt is generalizable across all instances of prompting Claude for tool use. The tool calling structure 
+    we're giving Claude (<function_calls> [...] </function_calls>) is a structure Claude has been specifically trained to use
+
+
+/************************************************************************************************************/
+Evaluating AI Models: Code, Human, and Model-Based Grading :
+
+Code-Based Grading Example: Sentiment Analysis : Claude's ability to classify the sentiment of movie reviews as positive or negative
+Human Grading Example: Essay Scoring : scoring essays, are difficult to evaluate with code alone. 
+    In this case, we can provide guidelines for human graders to assess the model's output.
+Model-Based Grading Examples : Claude to grade its own outputs by providing the model's response and a grading rubric. 
+    This allows us to automate the evaluation of tasks that would typically require human judgment.

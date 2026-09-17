@@ -1,0 +1,108 @@
+Structured Outputs is a feature that ensures the model will always generate responses that adhere to your supplied JSON Schema
+
+benifits for structured outputs
+    1. reliable type - safety
+    2. explicit refusals
+    3. simpler prompting
+
+Note :In addition to supporting JSON Schema in the REST API, the OpenAI SDKs for Python and JavaScript also make it easy to define object 
+    schemas using Pydantic and Zod respectively. 
+
+IMP : text_format=CalendarEvent is a Python SDK convenience feature of responses.parse()
+Schema = rules for what fields the data must have and what type each field must be.
+
+
+/***************************************************************************************/
+When to use Structured Outputs via function calling vs via text.format
+    Function calling useful when you build application that bridges the models and functionality of application
+        like model access to functions that query a database in order to build AI assistant that can help users
+    text.format (response_format) when you want to structured schema when replying to users
+        like math app, in that we want app to respond to specific json schema so that we can generate the UI with that
+TIP : If you are connecting the model to tools, functions, data, etc. in your system, then you should use function calling - 
+    If you want to structure the model’s output when it responds to the user, then you should use a structured text.format
+
+IMP : Both Structured Outputs and JSON mode are supported in the Responses API, Chat Completions API, Assistants API, 
+    Fine-tuning API and Batch API. recommend always using Structured Outputs
+
+
+/***************************************************************************************/
+How to use Structured Outputs with text.format
+    1. Step 1: Define your schema
+        First you must design the JSON Schema that the model should be constrained to follow
+    2. Step 2: Supply your schema in the API call
+        see the example in week 8 text_format.Py
+    3. Step 3: Handle edge cases
+        the model might not generate a valid response that matches the provided JSON schema.
+        This can happen in the case of a refusal, if the model refuses to answer for safety reasons, 
+            or if for example you reach a max tokens limit and the response is incomplete.
+            see the example in week 8 edge_case.py
+
+Refusals with Structured Outputs : models may occasionally refuse to fulfill the request for safety reasons. 
+    Since a refusal does not necessarily follow the schema you have supplied in response_format, 
+    the API response will include a new field called refusal to indicate that the model refused to fulfill the request.
+
+When the refusal property appears in your output object, you might present the refusal in your UI, 
+    or include conditional logic in code that consumes the response to handle the case of a refused request.     
+
+response.output_parsed : convenient shortcut when the structured response succeeded.
+response.output : full output structure, which you inspect when you need to handle things like refusals.
+
+Handling user-generated input : make sure prompt includes instructions on how to handle situations where the input cannot result in a valid
+    response. model will follow schema and which can result in hallucination if input is not related to schema
+Handling mistakes : Structured Outputs can still contain mistakes : adjust instructions in system instructions 
+    or split tasks into simpler subtasks
+Avoid JSON schema divergence : it is strongly recommend using the native Pydantic/zod sdk support.
+    this will help json schema to not get divergence. Add CI rules that flag when either the JSON schema or underlying data objects 
+    are edited if you are putting schema directly in the input without using pydantic
+
+
+/***************************************************************************************/
+Streaming : use streaming to process model responses or function call arguments as they are being generated, 
+    and parse them as structured data. That way, you don’t have to wait for the entire response to complete before handling it
+    checkout example on week 8 streaming.py
+
+Supported Types : String, Number, Boolean, Integer, Object, Array, Enum, anyOf
+Supported properties :
+    string : pattern, format, date-time, time, date, duration, email, hostname, ipv4, ipv6, uuid
+    number : multipleof, maximum, exclusiveMaximum, minimum, exclusiveMinimum
+    array : minItems, maxItems
+
+
+/***********************************************************************************************************/
+Restriction and Limitation
+
+Restriction example of string and number is shown in json.txt
+Root objects must not be anyOf and must be an object : root level object of a schema must be an object
+All fields must be required : To use Structured Outputs, all fields or function parameters must be specified as required.see example in json.txt
+Although all fields must be required (and the model will return a value for each parameter), 
+    it is possible to emulate an optional parameter by using a union type with null.
+
+Objects have limitations on nesting depth and size :schema may have 5000 object properties total with 10 levels of nesting
+Limitations on total string size : In a schema, total string length of all property names, definition names, etc cannot go 120,000 characters.
+Limitations on enum size : up to 1000 enum values across all enum properties. enum values not go 15,000 char when 250 enum values or more there.
+
+additionalProperties controls whether it is allowable for an object to contain additional keys / values that were not defined in the JSON Schema.
+    additionalProperties: false must always be set in objects, see the example in json.txt
+
+Key ordering : When using Structured Outputs, outputs will be produced in the same order as the ordering of keys in the schema.
+    Some type-specific keywords are not yet supported : allof, not, dependentRequired, dependentSchemas, if, then, else
+    For fine-tuned models, we additionally do not support the following: minLength, maxlength, minimumn, mintimes, etc..
+IMP : If you turn on Structured Outputs by supplying strict: true and call the API with an unsupported JSON Schema, you will receive an error.
+
+For anyOf, the nested schemas must each be a valid JSON Schema per this subset : see example in json.txt
+Definitions are supported : You can use definitions to define subschemas which are referenced throughout your schema : see example in json.txt
+Recursive schemas are supported : Sample recursive schema using # to indicate root recursion. :  see example in json.txt
+
+
+/*********************************************************************************************/
+Json mode : When JSON mode is turned on, the model’s output is ensured to be valid JSON
+
+To turn on JSON mode with the Responses API you can set the text.format to { "type": "json_object" }. 
+    If you are using function calling, JSON mode is always turned on.
+
+Important Notes :  
+    always instruct the model to produce JSON via some message in the conversation
+    JSON mode will not guarantee the output matches any specific schema, only that it is valid and parses without errors
+    Your application must detect and handle the edge cases that can result in the model output not being a complete JSON object
+    see example in Week 8 edge_case2.py
+

@@ -1,0 +1,47 @@
+Use Structured Output when the model itself can answer the task and you mainly need the answer in a reliable format.
+
+Examples:
+classify complaint
+extract contract fields
+sentiment
+urgency score
+return JSON/Pydantic object
+
+Code Files examples are in exercise Week_08:
+structured_data_extraction.py
+moderation.py
+ui_generation.py
+
+Note: LLM knows the answer
+→ I just need a strict shape
+
+
+/*********************************************************************************************************/
+Use Tools / Function Calling when the model needs something outside itself or needs to take an action.
+
+Examples:
+fetch user from database
+get weather from API
+create SmartOps task
+send email
+query Supabase
+update a record
+
+code Files examples are in exercises Week_08:
+anthropic.ipynb
+anthropic_exercises.ipynb
+
+
+/*******************************************************************************************/
+Project3 in smartops-ai, we created prompts and services which calls the model and model gave the Output
+Difference is we have created output structure inside the prompt itself , which is good and working and giving response in json as expected
+but there is another correct way to use structured outputs which is done in Project4
+
+IMP : one important thing we did in this project is we created chain of prompts which model responds
+
+
+/*************************************************************************************/
+Project 4 : we combine all this in project 3 prompt for complaint in one
+also we used two differnet sdk :
+For Groq, we used the OpenAI Python SDK because Groq exposes an OpenAI-compatible API:
+For Claude Sonnet on Amazon Bedrock, we used the Anthropic SDK:

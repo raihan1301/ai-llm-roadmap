@@ -1,0 +1,129 @@
+Transformer models are used to solve all kinds of task in different modalities
+like NLP, computer vision, audio and more
+
+for example we will use pipeline function from Transformers Library. It connects a model with its necessary preprocessing and postprocessing steps, allowing us to directly input any text and get an intelligible answer
+this function is been fine tuned for sentiment analysis in English.
+Hence it can tell if the sentence you have written is positive or negative and give score of how much
+
+/*****************************************************************/
+from transformers import pipeline
+
+classifier = pipeline("sentiment-analysis")
+classifier("I've been waiting for a HuggingFace course my whole life.")
+classifier(
+    ["I've been waiting for a HuggingFace course my whole life.", "I hate this so much!"]
+)
+
+Output
+[{'label': 'POSITIVE', 'score': 0.9598047137260437}]
+[{'label': 'POSITIVE', 'score': 0.9598047137260437},
+ {'label': 'NEGATIVE', 'score': 0.9994558095932007}]
+
+/*****************************************************************/
+
+they are multiple modalities in pipeline function
+1. Text pipeline : generate, classify, summarization, translation, classify text without prior training, feature extraction
+2. Image Pipleine: image to text - description of image, classify, object detection - locate object in images
+3. Audio Pipelines : automatic speech recognition, audio classify, text to speech
+4. multimodal pipeline : image - text to text
+
+/******************************************************************/
+
+Zero-shot classification : this is helpful because it is hard to annotating all the Text
+
+from transformers import pipeline
+
+classifier = pipeline("zero-shot-classification")
+classifier(
+    "This is a course about the Transformers library",
+    candidate_labels=["education", "politics", "business"],
+)
+
+Output
+{'sequence': 'This is a course about the Transformers library',
+ 'labels': ['education', 'business', 'politics'],
+ 'scores': [0.8445963859558105, 0.111976258456707, 0.043427448719739914]}
+
+/***************************************************************/
+Text generation : The main idea here is that you provide a prompt and the model will auto-complete it by generating the remaining text. 
+This is similar to the predictive text feature that is found on many phones.
+Text generation involves randomness, so it’s normal if you don’t get the same results as shown below.
+
+generator = pipeline("text-generation")
+generator("In this course, we will teach you how to")
+
+Output
+[{'generated_text': 'In this course, we will teach you how to understand and use '
+                    'data flow and data interchange when handling user data. We '
+                    'will be working with one or more of the most commonly used '
+                    'data flows — data flows of various types, as seen by the '
+                    'HTTP'}]
+
+control how many different sequences are generated with the argument num_return_sequences and the total length of the output text with the argument max_length.
+you can change the model as well
+
+generator = pipeline("text-generation", model="HuggingFaceTB/SmolLM2-360M")
+generator(
+    "In this course, we will teach you how to",
+    max_length=30,
+    num_return_sequences=2,
+)
+
+/**************************************************************************/
+Mask filling : fill-mask. The idea of this task is to fill in the blanks in a given text:
+The top_k argument controls how many possibilities you want to be displayed.special <mask> word, which is often referred to as a mask token.
+
+unmasker = pipeline("fill-mask")
+unmasker("This course will teach you all about <mask> models.", top_k=2)
+
+[{'sequence': 'This course will teach you all about mathematical models.',
+  'score': 0.19619831442832947,
+  'token': 30412,
+  'token_str': ' mathematical'},
+ {'sequence': 'This course will teach you all about computational models.',
+  'score': 0.04052725434303284,
+  'token': 38163,
+  'token_str': ' computational'}]
+
+/**************************************************************************/
+Image and audio pipelines :Transformer models can also work with images and audio. Here are a few examples:
+
+image_classifier = pipeline(
+    task="image-classification", model="google/vit-base-patch16-224"
+)
+result = image_classifier(
+    "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/pipeline-cat-chonk.jpeg"
+)
+print(result)
+
+Output:
+[{'label': 'lynx, catamount', 'score': 0.43350091576576233},
+ {'label': 'cougar, puma, catamount, mountain lion, painter, panther, Felis concolor',
+  'score': 0.034796204417943954},
+ {'label': 'snow leopard, ounce, Panthera uncia',
+  'score': 0.03240183740854263},
+ {'label': 'Egyptian cat', 'score': 0.02394474856555462},
+ {'label': 'tiger cat', 'score': 0.02288915030658245}]
+
+
+Automatic speech recognition
+
+transcriber = pipeline(
+    task="automatic-speech-recognition", model="openai/whisper-large-v3"
+)
+result = transcriber(
+    "https://huggingface.co/datasets/Narsil/asr_dummy/resolve/main/mlk.flac"
+)
+print(result)
+
+output
+{'text': ' I have a dream that one day this nation will rise up and live out the true meaning of its creed.'}
+
+
+/**********************************************************************************/
+
+Summary 
+One powerful application of Transformer models is their ability to combine and process data from multiple sources. This is especially useful when you need to:
+Search across multiple databases or repositories
+Consolidate information from different formats (text, images, audio)
+Create a unified view of related information

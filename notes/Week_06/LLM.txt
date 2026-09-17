@@ -1,0 +1,101 @@
+Large Language Models are most used for text generation
+
+Inference is the process of using a trained LLM to generate human like text from a input prompt.
+model leverage learned probabilities from billions of parameters to predict and generate the next token in a sequence
+
+Not all the word have equal weight in a sentence. so the ability to focus on relevant information is called attention
+Tip : In short, the attention mechanism is the key to LLMs being able to generate text that is both coherent and context-aware. 
+    It sets modern LLMs apart from previous generations of language models.
+
+Context length refers to the maximum number of tokens that the llm can process at once. it is like a models working memory
+
+Prompting means pass info to llm in a structure way and give input that guides the generation of llm toward the desired output
+as we know llm main task is to predict the next token, so our input sequence become cruicial 
+
+/***************************************************************************************/
+There are two phase of inference process : 1. prefill,  2. decode 
+    they work together like assembly line and play cruicial role in producing coherent text
+
+Prefill Phase : this is preparation stage, this phase involves three steps :
+    1. Tokenization : convert the input text into tokens
+    2. Embedding conversion : Transforming these tokens into numerical representation and that capture their menaning
+    3. Initial Processing : running these embeddings through the models neural network to create understanding of the context
+
+    Example : Gymnastic : G ym n astic, so total 4 tokens used : embedded into token ids [38, 1631, 77, 5174]
+
+Decode Phase : this is where actual text generation happens. Model generate one token at a time what we call an autoregressive process 
+    (where each token depend on previous ones). it involves in several key steps
+    1. Attention Computation : looking back at all previous tokens to understand context
+    2. probability calculation : determine the likelihood of each possible next token
+    3. token selection : choosing the next token based on probability
+    4. continuation check : deciding whether to continue or stop generation
+
+    This phase is memory intensive because model has to keep track of all previous tokens and their relationship
+
+/***************************************************************************************************/
+This part will focus on how we can control this generation process. we can adjust how the model make its token selection
+so we will turn these probabilities into actual choices we need the model to make
+
+1. raw logits : Models initial gut feelings about each possible next word
+2. Temprature control : so for example higher setting > 1 is a creativity dial, make next token choice random, while lower settings < 1 make them more focused and deterministic
+3. Top-P (Nucleus) Sampling : now instead of consider all the words, we only look if the proabibility threshold is above than what we detrermine let say 90%
+4. Top-K filtering : alternative approach where we consider only the k most likely next words
+
+Now LLM face the problem of keep repeating itself to the same point and to avoid these there are 2 penalties
+    1. Presence Penalty : A fixed penalty applied to a token that appeard before regardless how often, so this help model to prevent reusing it
+    2. Frequency Penalty : A scaling penalty that increase absed on how often a token(word) has been used, the more a word appears, it will less likely be choosen again
+These penalties are applied early in the token selection process
+
+Now we have to control how much text our llm generates, this is cruicial for practical application, there are several ways
+    1. Token Limits : Setting minimum and maximum token counts
+    2. Stop Sequences : defining specific patterns that signal the end of generation
+    3. End-of-Sequence Detection : letting model naturally conclude its response
+For example if we need single para than we set 100 tokens limits,
+
+Beam Search : instead of one token at a time and comitting to a single choice at each step, it explores multiple possible path simultaneously
+    1. At each step, maintain multiple canditates Sequences
+    2. for each canditate, compute probabilities for the next token
+    3. keep only the most promising combinations of sequences and next tokens
+    4. continue this process untill reach the desired length or stop condition
+    5. select the sequence with highest overall probability
+This approach often produces more coherent and grammatically correct text, though it requires more computational resources than simpler methods.
+
+/***************************************************************************************************/
+practical challenges we can face while deploying the models and how to measure and optimize their performance
+
+Key performing metrics : there are four critical metrics and this will shape implementation decisions:
+    1. Time to First Token (TTFT) : how quickly can you get first response : this is cruicial for User experience and affceted primarly by prefill phase
+    2. Time per Output Token (TPOT) : how fast it generates subsequent token : this determine the overall speed
+    3. Throughput : How many request it can handle simultaneously : this affect scaling and cost efficiency
+    4. VRAM usage : how much GPU memory we need : this is primary constraints in real world
+
+Context length : one of the most significant challenges
+    1. Memory usage : Grows quadratically with context length
+    2. processing speed : decreases linearly with longer contexts
+    3. Resource Allocation : require careful balancing of VRAM usuage
+Memory Usage ∝ Length² , Processing Time ∝ Length
+
+Kv cache optimization : to adress above concer most powerful is KV (Key-Value) caching
+    this improves inference speed by storing and reusing intermediate calculations
+    this reduce repeated calculations, improve generation speed, makes long context generation practical.
+Tradeoff is additional memory usuage but performace benifits usually far outweigh the cost
+
+/**************************************************************************************************/
+When we use this pretrain models, they come with limitations. Their pretraining happens on large amount of data which consist of best as well as worst
+
+Just an example:
+
+from transformers import pipeline
+unmasker = pipeline("fill-mask", model="bert-base-uncased")
+result = unmasker("This man works as a [MASK].")
+print([r["token_str"] for r in result])
+result = unmasker("This woman works as a [MASK].")
+print([r["token_str"] for r in result])
+
+['lawyer', 'carpenter', 'doctor', 'waiter', 'mechanic']
+['nurse', 'waitress', 'teacher', 'maid', 'prostitute']
+
+Explanation :
+model gives only one gender-free answer (waiter/waitress) to fill the mask.
+The others are work occupations usually associated with one specific gender — 
+    and yes, prostitute ended up in the top 5 possibilities the model associates with “woman” and “work.”
