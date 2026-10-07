@@ -1,0 +1,153 @@
+uv init --bare
+uv initializes the current directory. With --bare, it only creates pyproject.toml and does not create extra source folders, README files, etc.
+
+pyproject.toml : this is the configuration file for your Python project. It tells tools like uv things such as:
+[project]
+name = "week-10"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = []
+
+than when we add fastapi  : uv add fastapi , it will add fastapi in dependencies
+So it serves a similar role to package.json in your Next.js/TypeScript projects: it describes the project and keeps track of its dependencies. 
+    uv uses pyproject.toml as the project root and manages the project's environment/dependencies around it.
+
+uv add creates the project's virtual environment in .venv, adds FastAPI to pyproject.toml, 
+    and creates uv.lock so the same package versions can be installed later.
+
+FastAPI includes an official skill for AI coding agents : uvx library-skills
+uvx is an alias for uv tool run. It runs Library Skills in a temporary, isolated environment 
+    while Library Skills scans the packages installed in your project.
+
+This is how you run the file : uv run fastapi dev fast_api.py
+you should then see something similar to:
+    FastAPI  Starting development server
+    INFO: Uvicorn running on http://127.0.0.1:8000  : this when you open you will see the return message
+
+FastAPI generates a "schema" with all your API using the OpenAPI standard for defining APIs.
+A "schema" is a definition or description of something. Not the code that implements it, but just an abstract description.
+API "schema" : This schema definition includes your API paths, the possible parameters they take, etc.
+Data "schema" : The term "schema" might also refer to the shape of some data, like a JSON content.
+    it would mean the JSON attributes, and data types they have
+OpenAPI and JSON Schema : OpenAPI defines an API schema for your API. And that schema includes definitions (or "schemas") of the data sent and received
+    by your API using JSON Schema, the standard for JSON data schemas.
+
+TIP : You could also use it to generate code automatically, for clients that communicate with your API. 
+    For example, frontend, mobile or IoT applications.
+
+Configure where the app located like a entry point in pyproject.toml 
+[tool.fastapi]
+entrypoint = "main:app"
+This will tell the fastapi command that it should import the app like : from main import app
+
+Example:
+.
+├── backend
+│   ├── main.py
+│   ├── __init__.py
+Then you would set the entrypoint as:  entrypoint = "backend.main:app" which is equal to from backend.main import app
+
+IMP : you would have to remember to pass the correct path\entrypoint every time you call the fastapi command.
+
+
+/**********************************************************************************************/
+Path Parameters:
+You can declare path "parameters" or "variables" with the same syntax used by Python format strings:
+    example : @app.get("/items/{item_id}")
+
+Path parameters with types : declare the type of a path parameter in the function, using standard Python type annotations:
+    example : @app.get("/items/{item_id}") , async def read_item(item_id: int):
+    TIP : with that type declaration, FastAPI gives you automatic request "parsing".
+    IMP: if you have give datatype and you pass any other value you will see json structure of data validation error
+
+Note : FastAPI itself provides an alternative API documentation (using ReDoc), which you can access at http://127.0.0.1:8000/redoc
+
+There are many other tools including code geenration
+Pydantic : All the data validation is performed under the hood by Pydantic
+    You can use the same type declarations with str, float, bool and many other complex data types.
+
+Remember Order matters : when creating path if there is a fixed path use it appropiately, see below example
+to get data about the current user : path is /users/me
+to get data about a specific user by some user ID. : path is /users/{user_id}
+as path is evaluated in orders , make sure that "/users/me" declared before the "/users/{user_id}"
+
+Similarly, you cannot redefine a path operation: because it will always select the first so you cannot use same path twice
+
+
+/****************************************************************************************************/
+Predefined Values:
+if possible valid path parameter values to be predefined, you can use a standard Python Enum.
+
+Create an Enum class : 
+Import Enum and create a sub-class that inherits from str and from Enum.
+    by inheriting from str the API docs know the value must be of type string
+Than create class attributes with fixed values which will be available to use
+
+Declare a path parameter : Then create a path parameter with a type annotation using the enum class you created
+    The value of the path parameter will be an enumeration member.
+    TIP : You can compare it with the enumeration member in your created enum ModelName:
+    You can get the actual value (a str in this case) using model_name.value, or in general, your_enum_member.value:
+    You can return enum members from your path operation, even nested in a JSON body
+
+Path convertor : you can declare a path parameter containing a path using a URL like: /files/{file_path:path}
+Example : In that case, the URL would be: /files//home/johndoe/myfile.txt, with a double slash (//) between files and home.
+
+
+/****************************************************************************************************/
+Query Parameters : 
+When you declare other function parameters that are not part of the path parameters, they are automatically interpreted as "query" parameters.
+All the same processes that apply to path parameters also apply to query parameters: Editor support (obviously), Data "parsing" and validation, docs
+
+Defaults: As query parameters are not a fixed part of a path, they can be optional and can have default values.
+
+Optional parameters : declare optional query parameters, by setting their default to None:
+    example : async def read_item(item_id: str, q: str | None = None): , for path : /items/{item_id}  , q is query parameter as optional
+
+Query parameter type conversion : You can also declare bool types, and they will be converted:
+    example : async def read_item(item_id: str, q: str | None = None, short: bool = False):
+    so if "http://127.0.0.1:8000/items/foo?short=true" or http://127.0.0.1:8000/items/foo?short=on" or any other variation of short
+        your function will see the parameter short with a bool value of True. Otherwise as False.
+
+Multiple path and query parameters : 
+You can declare multiple path parameters and query parameters at the same time, FastAPI knows which is which.
+    And you don't have to declare them in any specific order. They will be detected by name:
+    example : async def read_user_item( item_id: str, user_id: int, q: str | None = None, short: bool = False):
+        this example is for this path "@app.get("/users/{user_id}/items/{item_id}")"
+
+Required query parameters : When you declare a default value for non-path parameters then it is not required.
+if you don't want to add a specific value but just make it optional, set the default as None.
+IMP : But when you want to make a query parameter required, you can just not declare any default value:
+
+
+/****************************************************************************************************/
+Request Body : When you need to send data from a client (let's say, a browser) to your API, you send it as a request body.
+    A request body is data sent by the client to your API
+    A response body is the data your API sends to the client.
+
+Sometimes client can only request a path, maybe with some query parameter and dont send body, or send body also, but you have to send response all time
+
+1st import pydantic Basemodel
+2nd than create data model, which is a class that inherits from Basemodel ex : class Item(BaseModel):
+3rd declare this class as parameter ex :async def create_item(item: Item):
+
+so fastAPI will read the body of the request as json, convert the correspoding types if needed, validate the data, give recieved data in parameter
+and generate JSON schema
+
+TIP :JSON Schemas of your models will be part of your OpenAPI generated schema 
+    and will also be used in the API docs inside each path operation that needs them:
+
+Use the model : Inside of the function, you can access all the attributes of the model object directly:
+    example in request_body.py shows both request body as well as response body
+
+Request body + path parameters : You can declare path parameters and request body at the same time.
+IMP : FastAPI will recognize that the function parameters that match path parameters should be taken from the path, 
+    and that function parameters that are declared to be Pydantic models should be taken from the request body.
+
+Request body + path + query parameters : You can also declare body, path and query parameters, all at the same time.
+    FastAPI will recognize each of them and take the data from the correct place.
+
+Example for above will be understod like this
+If the parameter is also declared in the path, it will be used as a path parameter.
+If the parameter is of a singular type (like int, float, str, bool, etc) it will be interpreted as a query parameter.
+If the parameter is declared to be of the type of a Pydantic model, it will be interpreted as a request body.
+

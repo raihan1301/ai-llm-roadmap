@@ -1,0 +1,109 @@
+Building System with the ChatGPT API
+
+Chapter 1: Language Models, the Chat Format and Tokens
+
+A languange model is built by using supervised learning to repeatedly next word
+Two Major LLM : 
+Base LLM : predicts next word, based on text training data
+Instruction tuned LLM : tries to follow the Instruction
+
+Best way to talk is System, User and Assistant message when you send any input to model
+System can set up tone to the model, assistant is llm response (like what model previously said or responsed) and user is prompt
+
+
+/*********************************************************************************************/
+Chapter 2: Classification
+
+Created a customer assitant to classify the ticket from the queries given by the user
+It also teah how to setup a prompt messages to get accurate response from the model
+
+
+/**********************************************************************************************/
+Chapter 3: Moderation
+
+Use OpenAI moderation models to detect harmful content in text and images. You can classify standalone inputs with the moderation endpoint or 
+    request moderation scores alongside a generated response. Use the results to enforce your application’s policy, 
+    such as filtering content, routing a request for review, or intervening with accounts that submit flagged content.
+
+Avoid Prompt Injections : by using the proper prompt when you send the message to model
+    you can also ask if the user is doing prompt injection and you can limit the answer if the answer is yes
+
+We can have different strict policy according to the application, which can help not to abuse the System
+
+
+/*******************************************************************************************/
+Chapter 4: Chain of Thought Reasoning
+
+Chain-of-Thought Prompting: We give steps prompt as a system, so the model can reason on each step and get the correct info
+once all the steps reasoing is completed, model will frame the output to user
+
+We can give rubric and other information as we can so the model can do a proper reasoning 
+
+Since we asked the LLM to separate its reasoning steps by a delimiter, 
+    we can hide the chain-of-thought reasoning from the final output that the user sees.
+
+
+/****************************************************************************************/
+Chapter 5: Chaining Prompts
+
+Implement a complex task with multiple prompts: This will help in getting better answer
+Retrieve detailed product information for extracted products and categories: so if it has multiple things to do , than we do in stages
+    one component at time. It make More focused for model
+
+chaining prompts can be response from model, than use our own function from that response
+or do the web search from that response and than use model again to give the final response
+
+for example a user ask about the employee data, model will get the user message and reply with what user wants to do
+our function will get the response , do the query and give result to model as message
+model than make the final response and give it to the user
+
+As model need reasoning and have context limitation, so larget catalogue is not feasible. It also decide to use variety of tools using plugins
+more advance technique fro retrival is text embeddings, enabled like fuzzy or symentaic search without exact name of product
+
+/****************************************************************************/
+Chapter 6: Check Outputs
+
+before you pass the output response to user check two ways
+    1. Check output for potentially harmful content : whether your output contains any harmful words, do this by using moderation method
+    2. Check if output is factually based on the provided product information : check that your output is sending the info asked by user 
+        and not anything else
+
+
+/***************************************************************************/
+Chapter 7 : Evaluation
+
+Build an End-to-End System:
+System of chained prompts for processing the user query
+
+So we created utils.py which will have all the def we need
+
+So our flow will be like this
+1. USER INPUT --> 2. INPUT MODERATION / GUARDRAIL --> 3. FIND PRODUCT NAMES + CATEGORIES via LLM
+--> 4. STRING → PYTHON LIST --> 5. RETRIEVE ACTUAL PRODUCT INFORMATION --> 6. GENERATE THE FINAL CUSTOMER RESPONSE via LLM
+--> 7. OUTPUT MODERATION / GUARDRAIL --> 8. VALIDATE THE RESPONSE via LLM --> 9. DISPLAY FINAL MESSAGE TO USER
+
+point 3 explanation : 
+    LLM looks ONLY at the catalogue and user message.
+    Output:
+    [
+       {"products": ["SmartX ProPhone", "FotoSnap DSLR Camera"]},
+       {"category": "Televisions and Home Theater Systems"}
+    ]
+
+point 5 explanation:
+    Result:
+       SmartX ProPhone full details
+       FotoSnap DSLR full details
+       all Television/Home Theater products
+
+
+Now, Evaluate LLM responses when there is a single "right answer".
+
+For Evaluation : First evaluate on some queries and check if you get correct answers
+    once that is passed, use some hard queries, if model fails
+    updated the prompt so hard queries can be corrected and answered. 
+    Than do the regression test for all the previous one, to verify that old tests still works
+    Than gather the development set for automated testing
+    Than lastly evaluate the test cases with the ideal answer and compare it
+
+TIP : you can ad metrics to measure performance on examples
