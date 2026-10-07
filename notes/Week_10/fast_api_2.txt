@@ -1,0 +1,150 @@
+/**********************************************************************************************************
+Query Parameters and String Validations : 
+we know we can use | None = None keyword to make it optional for the system but we can do additional validations as well
+
+example : even though q is optional, whenever it is provided, its length doesn't exceed 50 characters.
+    Import query from annotated
+    async def read_items(q: Annotated[str | None, Query(max_length=50)] = None):
+
+Annotated can be used to add metadata to your parameters 
+We had this type annotation: q: str | None = None
+we will do is wrap that with Annotated, so it becomes: q: Annotated[str | None] = None
+TIP : Both of those versions mean the same thing, q is a parameter that can be a str or None, and by default, it is None.
+
+Next step is : Add Query to Annotated in the q parameter : q: Annotated[str | None, Query(max_length=50)] = None
+    Notice that the default value is still None, so the parameter is still optional. But now, having Query(max_length=50) inside of Annotated
+
+Note : Old version  use Query as the default value of your parameter, instead of putting it in Annotated
+    example : q: str | None = Query(default=None, max_length=50)
+
+Query as the default value or in Annotated : when using Query inside of Annotated you cannot use the default parameter for Query.
+    Instead, use the actual default value of the function parameter.
+    Example : q: Annotated[str, Query(default="rick")] = "morty"  --> this is not allowed. because not clear default value is rick or morty
+
+so correct way for above example : q: Annotated[str, Query()] = "rick"
+    older version : q: str = Query(default="rick")
+
+Advantage for annotated : call that same function in other places without FastAPI. it would work as expected. If there's a required parameter
+        your editor will let you know with an error,
+    When you don't use Annotated and instead use the (old) default value style, if you call that function without FastAPI in other places, 
+        you have to remember to pass the arguments to the function
+
+Add more Validations: add a parameter min_length: q: Annotated[str | None, Query(min_length=3, max_length=50)] = None
+
+Add regular expressions : You can define a regular expression pattern that the parameter should match:
+    example : q: Annotated[ str | None, Query(min_length=3, max_length=50, pattern="^fixedquery$") ] = None
+    This specific regular expression pattern checks that the received parameter value:
+        ^: starts with the following characters, doesn't have characters before.
+        fixedquery: has the exact value fixedquery.
+        $: ends there, doesn't have any more characters after fixedquery.
+
+Default values : use default values other than None. to have a default value of "fixedquery": q: Annotated[str, Query(min_length=3)] = "fixedquery"
+    Note: Having a default value of any type, including None, makes the parameter optional (not required).
+
+Required parameters : When we don't need to declare we wrote q:str, but now we use Annotated with Query
+    justy simply not declare the default value , not even None : q: Annotated[str, Query(min_length=3)]
+
+Query parameter list / multiple values : define a query parameter explicitly with Query you can receive multiple values.
+    For example, to declare a query parameter q that can appear multiple times in the URL, you can write:
+    q: Annotated[list[str] | None, Query()] = None
+    you would receive the multiple q query parameters' values (foo and bar) in a Python list
+
+Query parameter list / multiple values with defaults : define a default list of values if none are provided:
+    Example : q: Annotated[list[str], Query()] = ["foo", "bar"]
+    Note : You can also use list directly instead of list[str]: q: Annotated[list, Query()] = []
+
+Declare more metadata : Example are below 
+title : q: Annotated[str | None, Query(title="Query string", min_length=3)] = None
+description : q: Annotated[ str | None, Query( title="Query string", description="Query to search in the database",min_length=3,),] = None,
+
+Alias parameters : Imagine that you want the parameter to be item-query. But item-query is not a valid Python variable name. 
+    The closest would be item_query, so example : async def read_items(q: Annotated[str | None, Query(alias="item-query")] = None):
+    that alias is what will be used to find the parameter value:
+
+Deprecating parameters : Now let's say you don't like this parameter anymore. but clients are still using it, but you have to show it is Deprecating
+    Then pass the parameter deprecated=True to Query: example : q: Annotated[str | None, Query(deprecated=True,)]
+
+To exclue parameters from OpenAi schema :  hidden_query: Annotated[str | None, Query(include_in_schema=False)] = None
+
+Custom Validation: you can use a custom validator function that is applied after the normal validation
+    For example, this custom validator checks that the item ID starts with isbn- for an ISBN book number or with imdb- for an IMDB movie URL ID:
+
+
+/*************************************************************************************************************************************?
+Path Parameters and Numeric Validations:
+    we can declare the same validation and metadata for path parameters as well
+    Note : You can declare all the same parameters as for Query.
+    example : async def read_items(item_id : Annotated[int, Path(title = "Id of Item")], q: Annotated[str | None, Query(alias="item-query")] = None):
+
+Order the parameters as you need : It does not matter which order you place, query first and than path parameter
+    TIP :It doesn't matter for FastAPI. It will detect the parameters by their names, types and default declarations (Query, Path, etc), 
+        it doesn't care about the order.
+    Note : Python will complain if you put a value with a "default" before a value that doesn't have a "default".
+if you use Annotated, you won't have this problem, it won't matter as you're not using the function parameter default values for Query() or Path().
+
+If you are not using annotated that use * 
+Python won't do anything with that *, but it will know that all the following parameters should be called as keyword arguments 
+but with Annotated, you do not have to use *
+
+Number validations: greater than or equal : With Query and Path, declare number constraints.
+    example : Here, with ge=1, item_id will need to be an integer number "greater than or equal" to 1.
+    item_id: Annotated[int, Path(title="The ID of the item to get", ge=1)], q: str
+
+Note : ge : greater than or equal
+gt : greater than
+le : less than or equal
+lt : less than
+    Example : item_id: Annotated[int, Path(title="The ID of the item to get", gt=0, le=1000)]
+
+Number validations: floats, greater than and less than : Number validations also work for float values.
+As with it you can require, for example, that a value must be greater than 0, even if it is less than 1.
+    So, 0.5 would be a valid value. But 0.0 or 0 would not., so thats why use gt
+
+
+/*****************************************************************************************************************************/
+Query Parameter Models : If you have a group of query parameters that are related, you can create a Pydantic model to declare them.
+so you can reuse the model in multiple places
+Note : Declare the query parameters that you need in a Pydantic model, and then declare the parameter as Query:
+
+In some special use cases (probably not very common), you might want to restrict the query parameters that you want to receive.
+    You can use Pydantic's model configuration to forbid any extra fields:
+
+
+/*******************************************************************************************************/
+Body - Multiple Parameters
+
+Mix Path, Query and body parameters : you can also declare body parameters as optional, by setting the default to None:
+async def update_item(
+    item_id: Annotated[int, Path(title="The ID of the item to get", ge=0, le=1000)],
+    q: str | None = None,
+    item: Item | None = None,
+):
+
+Multiple body parameters : the path operations would expect a JSON body with the attributes of an Item, like: name, description, price, tax
+    But you can also declare multiple body parameters, e.g. item and user: both are BaseModel class
+        example : async def update_item(item_id: int, item: Item, user: User):
+        Note :it will then use the parameter names as keys (field names) in the body, 
+
+Singular values in body : same way to add more FastAPI provides an equivalvent Body
+    example, extending the previous model, you could decide that you want to have another key importance in the same body, besides the item and user.
+    If you declare it as is, because it is a singular value, FastAPI will assume that it is a query parameter.
+    But you can instruct FastAPI to treat it as another body key using Body:
+        example : async def update_item( item_id: int, item: Item, user: User, importance: Annotated[int, Body()]):
+
+Multiple body params and query : declare additional query parameters whenever you need, additional to any body parameters.
+    As, by default, singular values are interpreted as query parameters
+
+Embed a single body parameter : you only have a single item body parameter from a Pydantic model Item. FastAPI will then expect its body directly.
+    But if you want it to expect a JSON with a key item and inside of it the model contents
+    you can use the special Body parameter embed: item: Annotated[Item, Body(embed=True)]
+    IMP : Body(embed=True) changes the request body you send into FastAPI, not the response you return.
+
+
+/******************************************************************************************************************************/
+Body - Fields : you can declare validation and metadata inside of Pydantic models using Pydantic's Field.
+Note :Notice that Field is imported directly from pydantic, not from fastapi as are all the rest (Query, Path, Body, etc).
+    Field works the same way as Query, Path and Body, it has all the same parameters, etc.
+
+Note : You can declare extra information in Field, Query, Body, etc. And it will be included in the generated JSON Schema.
+
+Field(...) lets you add rules to a Pydantic field.
