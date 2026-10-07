@@ -1,19 +1,19 @@
-from Project3_SmartOps_Prompt.prompts.contract import (CONTRACT_RISK_EXTRACTOR)
+from P03_SmartOps_Prompt_Services.prompts.survey import (NPS_RESPONSE_GENERATOR)
 
-from Project2_AiModels.api_utils import call_llm
+from P02_LLM_API_Utilities.api_utils import call_llm
 
 
-def extract_contract_risk(contract_context,backend="bedrock"):
+def generate_nps_response(survey_feedback,backend="bedrock"):
     """
-    Analyze contract/business context and identify renewal risks.
+    Analyze survey/NPS feedback and generate an appropriate response.
     """
 
     user = f"""
-    Analyze the following contract and business information: <contract_context> {contract_context} </contract_context>
+    Analyze the following customer survey or NPS feedback: <survey_feedback> {survey_feedback} </survey_feedback>
     """
 
     response = call_llm(
-        system=CONTRACT_RISK_EXTRACTOR,
+        system=NPS_RESPONSE_GENERATOR,
         user=user,
         backend=backend
         )
@@ -21,7 +21,7 @@ def extract_contract_risk(contract_context,backend="bedrock"):
 
 
 def main():
-    contract_context = """
+    survey_feedback  = """
         Company: ABC Security
         Contract Number: SEC-2026-104
 
@@ -38,9 +38,9 @@ def main():
         The client has mentioned concerns about guard punctuality during the last account review.
     """
 
-    result = extract_contract_risk(contract_context=contract_context, backend="bedrock")
+    result = generate_nps_response(survey_feedback=survey_feedback , backend="bedrock")
 
-    print("\n--- CONTRACT RISK ---")
+    print("\n--- NPS / SURVEY ANALYSIS ---")
     print(result)
 
 

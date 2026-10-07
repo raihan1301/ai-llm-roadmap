@@ -1,9 +1,9 @@
-from Project3_SmartOps_Prompt.prompts.complaint import (SENTIMENT_ANALYZER,
+from P03_SmartOps_Prompt_Services.prompts.complaint import (SENTIMENT_ANALYZER,
                                ACTION_EXTRACTOR,
                                URGENCY_SCORER,
                                COMPLAINT_CATEGORIZER)
 
-from Project2_AiModels.api_utils import call_llm
+from P02_LLM_API_Utilities.api_utils import call_llm
 
 
 def sentiment_analyzer(complaint, backend ="bedrock"):

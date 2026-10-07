@@ -1,8 +1,8 @@
-from Project3_SmartOps_Prompt.prompts.email import (EMAIL_SUMMARIZER,
+from P03_SmartOps_Prompt_Services.prompts.email import (EMAIL_SUMMARIZER,
                                PROFESSIONAL_REWRITTER,
                                FOLLOWUP_DRAFTER)
 
-from Project2_AiModels.api_utils import call_llm
+from P02_LLM_API_Utilities.api_utils import call_llm
 
 def summarize_email(email_text, backend="bedrock"):
     """

@@ -1,5 +1,5 @@
 from openai import OpenAI
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from enum import Enum
 from dotenv import load_dotenv
 import os
@@ -9,46 +9,40 @@ import json
 from anthropic import AnthropicBedrock
 from botocore.config import Config
 
-
-# 1. ALLOWED CATEGORY VALUES
-class Category(str, Enum):
-    billing = "billing"
-    service_quality = "service_quality"
-    staff = "staff"
-    employee = "employee"
-    response_time = "response_time"
-    incident = "incident"
-    other = "other"
-
-# 2. ALLOWED SENTIMENT VALUES
-class Sentiment(str, Enum):
-    positive = "positive"
-    negative = "negative"
-    neutral = "neutral"
-
-# 3. STRUCTURED OUTPUT SCHEMA
-class TicketClassification(BaseModel):
-    category : Category
-    urgency : int
-    sentiment : Sentiment
-    suggested_action : str
-    draft_reply : str
-
-#4. CLASSIFY TICKET FUNCTION
-def classify_ticket_groq_gpt(text: str):
-    """
-    This below code is with OpenAI SDK
-    """
-    """
-    This function will have system prompt which will
-    1. classify the complaint
-    2. urgency must be between 1 and 10
-    3. determine sentiment
-    4. suggest the next action
-    5. draft a professional reply
-    """
-    system_prompt = """
+SYSTEM_PROMPT = """
     you are smartops ticket classifier agent.
+
+    FIRST determine whether the user's message is actually a complaint.
+    A complaint means the user is reporting dissatisfaction, a problem, service failure, billing issue, employee or guard issue, delayed response,
+    incident, safety concern, or another negative experience.
+
+    Examples of valid complaints:
+    - "The guard was 50 minutes late."
+    - "I was charged twice."
+    - "Nobody responded to my calls."
+    - "Your employee was rude."
+    - "Our site was left without coverage."
+
+    Examples that are NOT complaints:
+    - "What is your price?"
+    - "What services do you offer?"
+    - "Can I get a quote?"
+    - "What time do you open?"
+    - "Tell me about SmartOps."
+
+    If the message is NOT a complaint:
+    - valid = false
+    - explain briefly in validation_reason
+    - category = null
+    - urgency = null
+    - sentiment = null
+    - suggested_action = null
+    - draft_reply = null
+    - do not perform complaint classification
+
+    If the message IS a complaint:
+    - valid = true
+    - validation_reason = "Valid complaint"
 
     Classify the complaint into exactly one category:
     - billing: invoices, charges, payments, refunds
@@ -70,7 +64,62 @@ def classify_ticket_groq_gpt(text: str):
     Draft a professional reply, but do NOT claim that an action has already been taken unless the complaint explicitly says it has been taken.
 
     Do not invent names, dates, actions, or facts.
+"""
+
+# 1. ALLOWED CATEGORY VALUES
+class Category(str, Enum):
+    billing = "billing"
+    service_quality = "service_quality"
+    staff = "staff"
+    employee = "employee"
+    response_time = "response_time"
+    incident = "incident"
+    other = "other"
+
+# 2. ALLOWED SENTIMENT VALUES
+class Sentiment(str, Enum):
+    positive = "positive"
+    negative = "negative"
+    neutral = "neutral"
+
+# 3. STRUCTURED OUTPUT SCHEMA
+class TicketClassification(BaseModel):
+    valid : bool
+    validation_reason: str
+    category : Category | None = None
+    urgency : int | None = Field(default=None, ge=1, le=10)
+    sentiment : Sentiment | None = None
+    suggested_action : str | None = None
+    draft_reply : str | None = None
+
+def policies(key):
     """
+    company policies
+    """
+    POLICIES = {
+        "billing": "Refunds are processed within 5 business days.",
+        "service_quality": "Service quality complaints must be reviewed by the site manager.",
+        "staff": "Staff-related complaints are escalated to operations management.",
+        "response_time": "Response-time issues must be acknowledged within 24 hours.",
+        "other": "General complaints must be reviewed by the operations team."
+    }
+
+    return POLICIES.get(key)
+
+#4. CLASSIFY TICKET FUNCTION
+def classify_ticket_groq_gpt(text: str):
+    """
+    This below code is with OpenAI SDK
+    """
+    """
+    This function will have system prompt which will
+    1. classify the complaint
+    2. urgency must be between 1 and 10
+    3. determine sentiment
+    4. suggest the next action
+    5. draft a professional reply
+    """
+    system_prompt = SYSTEM_PROMPT
 
     load_dotenv()
 
@@ -113,30 +162,7 @@ def classify_ticket_aws_claude(text: str):
     4. suggest the next action
     5. draft a professional reply
     """
-    system_prompt = """
-    you are smartops ticket classifier agent.
-
-    Classify the complaint into exactly one category:
-    - billing: invoices, charges, payments, refunds
-    - service_quality: general quality of service issues
-    - staff: employee or guard behavior, professionalism, conduct
-    - employee: internal employee-related issue
-    - response_time: lateness, delayed arrival, slow response, missed timing
-    - incident: security incident, safety event, theft, injury, emergency, or property damage
-    - other: does not fit the above categories
-
-    Urgency:
-    1-3 = low
-    4-6 = medium
-    7-8 = high
-    9-10 = critical or immediate safety/business risk
-
-    Determine sentiment.
-    Suggest the appropriate next action in no more than 5 sentences.
-    Draft a professional reply, but do NOT claim that an action has already been taken unless the complaint explicitly says it has been taken.
-
-    Do not invent names, dates, actions, or facts.
-    """
+    system_prompt = SYSTEM_PROMPT
 
     session = boto3.Session() # create a boto3 session to dynamically get and set the region name
     AWS_REGION = session.region_name
@@ -146,7 +172,7 @@ def classify_ticket_aws_claude(text: str):
     
     response = client.messages.parse(
         model = MODEL_NAME,
-        max_tokens = 2000,
+        max_tokens = 20000,
         system = system_prompt,
         messages = [
             {
@@ -172,30 +198,8 @@ def classify_ticket_aws_gpt(text: str):
     4. suggest the next action
     5. draft a professional reply
     """
-    system_prompt = """
-    you are smartops ticket classifier agent.
+    system_prompt = SYSTEM_PROMPT
 
-    Classify the complaint into exactly one category:
-    - billing: invoices, charges, payments, refunds
-    - service_quality: general quality of service issues
-    - staff: employee or guard behavior, professionalism, conduct
-    - employee: internal employee-related issue
-    - response_time: lateness, delayed arrival, slow response, missed timing
-    - incident: security incident, safety event, theft, injury, emergency, or property damage
-    - other: does not fit the above categories
-
-    Urgency:
-    1-3 = low
-    4-6 = medium
-    7-8 = high
-    9-10 = critical or immediate safety/business risk
-
-    Determine sentiment.
-    Suggest the appropriate next action in no more than 5 sentences.
-    Draft a professional reply, but do NOT claim that an action has already been taken unless the complaint explicitly says it has been taken.
-
-    Do not invent names, dates, actions, or facts.
-    """
     bedrock = boto3.client( "bedrock-runtime",
         region_name="us-east-1",
         config=Config(

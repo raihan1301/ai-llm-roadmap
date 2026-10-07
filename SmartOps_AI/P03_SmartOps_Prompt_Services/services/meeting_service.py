@@ -1,6 +1,6 @@
-from Project3_SmartOps_Prompt.prompts.meeting import (MEETING_NOTES_FORMATTER)
+from P03_SmartOps_Prompt_Services.prompts.meeting import (MEETING_NOTES_FORMATTER)
 
-from Project2_AiModels.api_utils import call_llm
+from P02_LLM_API_Utilities.api_utils import call_llm
 
 
 def format_meeting_notes(meeting_content,backend="bedrock"):

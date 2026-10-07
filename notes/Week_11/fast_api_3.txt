@@ -1,0 +1,123 @@
+Response Model - Return Type : declare the type used for the response by annotating the path operation function return type.
+    FastAPI will use this return type to: : Validate data, Add a JSON schema for the response and serialize the returned data to JSON
+        IMP : It will limit and filter the output data to what is defined in the return type
+
+response_model Parameter : return some data that is not exactly what the type declares.
+    example : you could want to return a dictionary or a database object, but declare it as a Pydantic model. 
+    add the return type annotation, it will give error that your function is returning a type (dict) that is different from what you declared (Pydantic model)
+    In those cases, you can use the path operation decorator parameter response_model instead of the return type.
+
+    Note : Notice that response_model is a parameter of the "decorator" method (get, post, etc). 
+        Not of your path operation function, like all the parameters and body.
+
+response_model Priority : If you declare both a return type and a response_model, the response_model will take priority and be used by FastAPI.
+    You can also use response_model=None to disable creating a response model for that path operation
+
+Return the same input data : we are using  model to declare our input and the same model to declare our output:
+    example : whenever a browser is creating a user with a password, the API will return the same password in the response.
+    IMP : if we use the same model for another path operation, we could be sending our user's passwords to every client.
+
+Add an output model : We can instead create an input model with the plaintext password and an output model without it:
+    So, FastAPI will take care of filtering out all the data that is not declared in the output model using pydantic
+
+response_model or Return Type : because the two models are different, if we annotated the function return type as UserOut, 
+    the editor and tools would complain that we are returning an invalid type, as those are different classes.
+    That's why in this example we have to declare it in the response_model parameter.
+
+Return Type and Data Filtering : Now as we used two different class for input and output, so it means we dont get support from editor
+    but if we want to keep using it that even if more data is being sent out and it will filter based on class we passed.
+    we can use classses and inheritance to take advantage of function type annotations
+        Example : class BaseUser(BaseModel): class UserIn(BaseUser): async def create_user(user: UserIn) -> BaseUser:
+
+Type Annotations and Tooling : BaseUser has the base fields. Then UserIn inherits from BaseUser and adds the password field, 
+    so, it will include all the fields from both models.
+
+FastAPI Data Filtering : it will see the return type and make sure that what you return includes only the fields that are declared in the type.
+    This way, you can get the best of both worlds: type annotations with tooling support and data filtering.
+
+Other Return Type Annotations : cases where you return something that is not a valid Pydantic field and you annotate it in the function below are example
+    Return a Response Directly : This simple case is handled automatically by FastAPI because the return type annotation is the class Response
+    Annotate a Response Subclass : You can also use a subclass of Response in the type annotation
+    Invalid Return Type Annotations : return some other arbitrary object that is not a valid Pydantic type, than it will fail
+    Disable Response Model : so if you want different return type which is not valid pydantic but want all fastapi function, you can disable response model
+        by setting response_model=None: example : @app.get("/portal", response_model=None)
+        by this FastAPI skip the response model generation and you can have any return type annotations you need without affecting your FastAPI application.
+
+Response Model encoding parameters : Your response model could have default values. 
+    but you might want to omit them from the result if they were not actually stored.
+    so you can Use the response_model_exclude_unset parameter, You can set the path operation decorator parameter response_model_exclude_unset=True:
+    example : @app.get("/items/{item_id}", response_model=Item, response_model_exclude_unset=True)
+        and those default values won't be included in the response, only the values actually set.
+
+Note : Data with values for fields with defaults, for example if you have values for that models field, it will contain them
+    Data with the same values as the defaults : so if the actual value is same as default value, still does not matter, fastapi is smart enough to include them
+
+response_model_include and response_model_exclude: 
+    You can also use the path operation decorator parameters response_model_include and response_model_exclude.
+    They take a set of str with the name of the attributes to include (omitting the rest) or to exclude (including the rest).
+    This can be used as a quick shortcut if you have only one Pydantic model and want to remove some data from the output.
+
+Using list s instead of set s : If you forget to use a set and use a list or tuple instead, FastAPI will still convert it to a set and work correctly:
+
+
+/*********************************************************************************************************************/
+Response Status Code:
+The same way you can specify a response model, you can also declare the HTTP status code used for the response with the parameter status_code 
+    in any of the path operations:
+    example : @app.post("/items/", status_code=201), Notice that status_code is a parameter of the "decorator" method
+
+The status_code parameter receives a number with the HTTP status code.
+Note : status_code can alternatively also receive an IntEnum, such as Python's http.HTTPStatus.
+    It will return the status code in the response
+
+In HTTP, you send a numeric status code of 3 digits as part of the response.
+    100 - 199 are for "Information". You rarely use them directly
+    200 - 299 are for "Successful" responses , some examples : 200 is default, 201 is created, 204 is No content
+    300 - 399 are for "Redirection". Responses with these status codes may or may not have a body, except for 304, "Not Modified", which must not have one.
+    400 - 499 are for "Client error" responses , some examples : 404 is not found, generic it can be 400
+    500 - 599 are for server errors , never use directly, it will return this automatically if anything goes wrong with application
+
+No need to remember everything by hard, for example 201 is for created, but we can use convenience status from fastapi.status
+    They are just a convenience, they hold the same number, but that way you can use the editor's autocomplete to find them:
+    example : @app.post("/items/", status_code=status.HTTP_201_CREATED)
+
+
+/*********************************************************************************************************************/
+Handling Errors : you need to report an error to a client that is using your API. client can be browser, code, or IoT device
+    You could need to tell the client that: client does not have enough privelege, or not having access to resource, item not exist etc.
+    In these cases, you would normally return an HTTP status code in the range of 400 (from 400 to 499).
+
+Use HTTPException : To return HTTP responses with errors to the client you use HTTPException.
+Raise an HTTPException in your code : HTTPException is a normal Python exception with additional data relevant for APIs.
+    if the error is raised in code : it will terminate that request right away and send the HTTP error from the HTTPException to the client.
+The resulting response : if the client requests which is not exists. client will receive an HTTP status code of 404, and a JSON response
+Note : When raising an HTTPException, you can pass any value that can be converted to JSON as the parameter detail, not only str.
+    You could pass a dict, a list, etc.
+
+Add custom headers : add custom headers to the HTTP error. For example, for some types of security.
+    you can add inside the HTTPException(headers={"X-Error": "There goes my error"},)
+
+custom exception handlers : add custom exception handlers with the same exception utilities from Starlette.
+    example : @app.exception_handler(UnicornException) , you can also see example in Handling_Errors.py in Week 11 exercises
+
+Override the default exception handlers : when you raise exception you recieve default exception, you can override it
+Override request validation exceptions : When a request contains invalid data, FastAPI internally raises a RequestValidationError.
+    To override it, import the RequestValidationError and use it with @app.exception_handler(RequestValidationError) to decorate the exception handler.
+Override the HTTPException error handler : The same way, you can override the HTTPException handler.
+
+Use the RequestValidationError body : The RequestValidationError contains the body it received with invalid data.
+    You could use it while developing your app to log the body and debug it, return it to the user, etc.
+
+FastAPI's HTTPException vs Starlette's HTTPException : 
+    FastAPI's HTTPException error class inherits from Starlette's HTTPException error class.
+    The only difference is that FastAPI's HTTPException accepts any JSON-able data for the detail field, 
+        while Starlette's HTTPException only accepts strings for it.
+
+Note : you can keep raising FastAPI's HTTPException as normally in your code.
+    But when you register an exception handler, you should register it for Starlette's HTTPException.
+
+In this example, to be able to have both HTTPExceptions in the same code, Starlette's exceptions is renamed to StarletteHTTPException:
+    from starlette.exceptions import HTTPException as StarletteHTTPException
+
+Reuse FastAPI's exception handlers : If you want to use the exception along with the same default exception handlers from FastAPI,
+    you can import and reuse the default exception handlers from fastapi.exception_handlers
