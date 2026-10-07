@@ -1,0 +1,72 @@
+you can leverage custom validators at the field and model levels to enforce more complex constraints and ensure the integrity of your data.
+
+Field validators : a field validator is a callable taking the value to be validated as an argument and returning the validated value.
+    Four different types of validators. They defined using the annotated pattern or using the @field_validator decorator, applied on a class method:
+    
+After validators: run after Pydantic’s internal validation. They are generally more type safe and thus easier to implement.
+
+Before validators: run before Pydantic’s internal parsing and validation (e.g. coercion of a str to an int).
+    These are more flexible than after validators, but they also have to deal with the raw input, which in theory could be any arbitrary object
+    The value returned from this callable is then validated against the provided type annotation by Pydantic.
+IMP : you should also avoid mutating the value directly if you are raising a validation error later in your validator function, 
+    as the mutated value may be passed to other validators if using unions.
+
+Plain validators: act similarly to before validators but they terminate validation immediately after returning,
+    so no further validators are called and Pydantic does not do any of its internal validation against the field type.
+
+Wrap validators: are the most flexible of all. You can run code before or after Pydantic and other validators process the input, 
+    or you can terminate validation immediately, either by returning the value early or by raising an error.
+    Such validators must be defined with a mandatory extra handler parameter: a callable taking the value to be validated as an argument. 
+Note : Internally, this handler will delegate validation of the value to Pydantic. 
+    You are free to wrap the call to the handler in a try..except block, or not call it at all.
+
+Which validator pattern to use Annotated or decorator: both provide same thing but they provide different benifits
+    Using the annotated pattern : One of the key benefits of using the annotated pattern is to make validators reusable:
+        example : create one function and use that function in validator in any pydantic class model, see example in validators_annotated.py
+    Using the decorator pattern : One of the key benefits of using the field_validator() decorator is to apply the function to multiple fields:
+        example : in same class we can just create field_validator for 2 fields and pass to one class, see example in validators_decorator.py
+        Note : If you want the validator to apply to all fields (including the ones defined in subclasses), you can pass '*' as the field name argument.
+
+
+Model validators : Validation can also be performed on the entire model’s data using the model_validator() decorator.
+
+AfterValidator: run after the whole model has been validated. 
+    they are defined as instance methods and can be seen as post-initialization hooks. Important note: the validated instance should be returned.
+
+Before validators: are run before the model is instantiated
+    These are more flexible than after validators, but they also have to deal with the raw input
+
+Wrap validators: are the most flexible of all. You can run code before or after Pydantic and other validators process the input data, 
+    or you can terminate validation immediately, either by returning the data early or by raising an error.
+
+IMP : A good rule to remember:
+    field_validator
+        → "Is THIS field valid?"
+    model_validator
+        → "Do THESE fields make sense together?"
+
+Note : On inheritance A model validator defined in a base class will be called during the validation of a subclass instance.
+    Overriding a model validator in a subclass will override the base class’ validator, 
+        and thus only the subclass’ version of said validator will be called.
+
+
+Raising validation errors : To raise a validation error, three types of exceptions can be used:
+    ValueError : this is the most common exception raised inside validators.
+    AssertionError : using the assert statement also works, but these statements are skipped when Python is run with the -O optimization flag.
+    PydanticCustomError : a bit more verbose, but provides extra flexibility:
+Note : When a validator rejects data in production, Logfire can record the rejected value in its structured errors, so you can see what broke the rule.
+
+Validation info : Both the field and model validators callables (in all modes) can optionally take an extra ValidationInfo argument
+    such as : already validated data, user defined context, current validation mode, current field name etc.
+
+Validation data : For field validators, the already validated data can be accessed using the data property
+    The data property is None for model validators.
+
+Validation context : You can pass a context object to the validation methods, 
+    which can be accessed inside the validator functions using the context property:
+    Note : Similarly, you can use a context for serialization.
+
+Ordering of validators : When using the annotated pattern, the order in which validators are applied is defined as follows: 
+    before and wrap validators are run from right to left, and after validators are then run from left to right
+    Note : Internally, validators defined using the decorator are converted to their annotated form counterpart and added last after 
+        the existing metadata for the field. This means that the same ordering logic applies.

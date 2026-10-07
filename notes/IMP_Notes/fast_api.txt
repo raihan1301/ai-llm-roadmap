@@ -1,0 +1,84 @@
+POST
+Client sends data to server
+Server processes it
+Server returns response to client
+
+GET
+Client asks server for data
+Server finds/processes the data
+Server returns response to client
+
+And very important: in both GET and POST, the return is always:
+Server → Client
+
+/***************************************************************/
+Example use case : Company X owner opens a complaint → clicks Summarize Complaint → AI generates summary, urgency, sentiment, etc.
+I would use POST : POST /api/v1/summarize-complaint
+    Receive complaint_id -> Fetch complaint from Supabase -> Send complaint to LLM -> Generate: summary, urgency, sentiment, reason ->
+    suggested action -> Return result to frontend
+Why POST instead of GET? : Because clicking Summarize Complaint isn't merely retrieving existing information. 
+    You're asking the server to perform an operation involving the LLM.
+
+Example use case : Client submits incident form → incident gets created in Supabase → AI should analyze it → 
+    SmartOps task should be created containing summary, tone, reason, etc.
+So entire thing happened with post, because you recieve something and server do the operation and return the result (creating task)
+but when owner comes in and open the task that will be get operation, because nothing is created
+
+
+/************************************************************************/
+GET
+"Give me something that already exists."
+
+POST
+"Take this input and do/create something."
+
+
+/**************************************************************/
+You don’t strictly need a router yet. The reason I suggested APIRouter is because you said you want separate files for each service. 
+    It helps those separate files become parts of one FastAPI application.
+example we have below structure:
+    P06_SmartOps_FastAPI/
+    │
+    ├── classify_ticket_v3.py
+    ├── health.py
+    └── __init__.py
+
+    and we want to add 3 more files in it for different services ,so do you want all these endpoints to belong to one server, or several separate servers?
+    If you put this in every file: app = FastAPI(), then each file becomes its own separate FastAPI application.
+
+    so if we run uv run fastapi dev classify_ticket_v3.py, we only start app A, Its available routes might be: /api/v1/classify_ticket
+    but /health from health.py is not automatically part of that app.
+
+    but instead what we want is one FastAPI application and that can use all the routes examples : 
+    One SmartOps FastAPI application
+    │
+    ├── /health
+    ├── /api/v1/classify_ticket
+    ├── /api/v1/summarize_complaint
+    ├── /api/v1/draft_followup
+    └── /api/v1/extract_contract_data
+
+    so we use router : A group of routes that belongs to a bigger FastAPI app
+    router = APIRouter()  and in main file app.include_router(health_router)
+
+
+/******************************************************************************************************/
+@app.exception_handler(RequestValidationError) : That line registers your function as the handler for that specific exception type.
+So when Pydantic/FastAPI is validating the request body and something fails, FastAPI raises a RequestValidationError. It then checks:
+    Do I have a handler registered for RequestValidationError?” and than if found it will pass to that handler
+
+@app.exception_handler(StarletteHTTPException) : handles HTTP errors that are intentionally raised during your endpoint logic, like:
+raise HTTPException(status_code=404,detail="Complaint not found")
+So if your endpoint runs and decides something is wrong, FastAPI/Starlette creates an HTTP exception, and this handler catches it.
+
+Summary:
+    StarletteHTTPException
+    → endpoint logic says "this request cannot continue"
+    → examples: 404 not found, 403 forbidden, 418 custom error
+
+    RequestValidationError
+    → incoming request does not match the Pydantic model
+    → examples: missing field, wrong type, failed validator
+
+IMP RequestValidationError handles 422 error which is validation errors
+for server error it is 500 so we can use : @app.exception_handler(Exception)
