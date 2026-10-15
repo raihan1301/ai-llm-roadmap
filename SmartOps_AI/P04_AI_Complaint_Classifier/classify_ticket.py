@@ -149,6 +149,17 @@ def classify_ticket_groq_gpt(text: str):
     classify = response.output_parsed
     return classify
 
+"""
+I am not just output the response, but other details as well like
+token used, latency, to calculate cost and log the things, so i updated code for week 12
+week 12 we also create one more basemodel for other metrics than output
+"""
+class LLMMetrics(BaseModel):
+    model_used : str
+    input_tokens : int
+    output_tokens : int
+    total_tokens : int
+
 #4. CLASSIFY TICKET FUNCTION
 def classify_ticket_aws_claude(text: str):
     """
@@ -183,7 +194,19 @@ def classify_ticket_aws_claude(text: str):
         output_format=TicketClassification
     )
 
-    return response.parsed_output
+    result = response.parsed_output
+
+    """
+    this below code is extra for week 12
+    """
+    metrics = LLMMetrics(
+        model_used = response.model,
+        input_tokens = response.usage.input_tokens,
+        output_tokens = response.usage.output_tokens,
+        total_tokens = (response.usage.input_tokens + response.usage.output_tokens)
+    )
+
+    return result, metrics
 
 #4. CLASSIFY TICKET FUNCTION
 def classify_ticket_aws_gpt(text: str):

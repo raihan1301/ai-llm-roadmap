@@ -1,0 +1,96 @@
+SQLModel is built on top of SQLAlchemy and Pydantic and any database is supported such as : PostgreSQL, MySQL, SQLite, Oracle, etc
+
+We'll create the simplest first version of the app with a single SQLModel model first.
+Later we'll improve it increasing security and versatility with multiple models below.
+
+
+/**************************************************************************************************/
+Single Model
+Create Models: check out sql.py in Exercises Week 12 : The Hero class is very similar to a Pydantic model there are some differences:
+    table=True : tells SQLModel that this is a table model, it should represent a table in the SQL database, it's not just a data model
+    Field(primary_key=True) : tells SQLModel that the id is the primary key in the SQL database 
+        We use int | None for the primary key field so that in Python code we can create an object without an id (id=None)
+    Field(index=True) : tells SQLModel that it should create a SQL index for this column, 
+        that would allow faster lookups in the database when reading data filtered by this column.
+
+Create Engine : A SQLModel engine (underneath it's actually a SQLAlchemy engine) is what holds the connections to the database.
+    You would have one single engine object for all your code to connect to the same database
+    Note : Using check_same_thread=False allows FastAPI to use the same SQLite database in different threads. 
+        This is necessary as one single request could use more than one thread 
+
+Create Tables: We then add a function that uses SQLModel.metadata.create_all(engine) to create the tables for all the table models.
+
+Create Session Dependency : A Session is what stores the objects in memory and keeps track of any changes needed in the data, 
+    then it uses the engine to communicate with the database.
+    create a FastAPI dependency with yield that will provide a new Session for each request. 
+        This is what ensures that we use a single session per request. 
+    Then we create an Annotated dependency SessionDep to simplify the rest of the code that will use this dependency.
+
+Create Database Tables on Startup : We will create the database tables when the application starts.
+    Note :Here we create the tables on an application startup event. 
+        For production you would probably use a migration script that runs before you start your app
+
+Create a Hero : each SQLModel model is also a Pydantic model, you can use it in the same type annotations that you could use Pydantic models.
+    For example, if you declare a parameter of type Hero, it will be read from the JSON body.
+    The same way, you can declare it as the function's return type, and then the shape of the data will show up in the automatic API docs UI.
+    Note : Here we use the SessionDep dependency (a Session) to add the new Hero to the Session instance, 
+        commit the changes to the database, refresh the data in the hero, and then return it.
+
+Read Heroes : We can read Heros from the database using a select(). We can include a limit and offset to paginate the results.
+    we can also read one hero with hero_id
+
+Delete a Hero : We can also delete a Hero.
+
+IMP : engine = connection/configuration for the database
+    session = use that database right now to perform operations
+
+let's refactor this app a bit to increase security and versatility. it lets the client decide the id of the Hero to create.
+they could overwrite an id we already have assigned in the DB. Deciding the id should be done by the backend or the database, not by the client.
+Additionally, we create a secret_name for the hero, but so far, we are returning it everywhere, that's not very secret
+
+
+/*******************************************************************************************************************/
+Multiple Models
+
+Create Multiple Models : In SQLModel, any model class that has table=True is a table model.
+    And any model class that doesn't have table=True is a data model, these ones are actually just Pydantic models 
+    IMP : With SQLModel, we can use inheritance to avoid duplicating all the fields in all the cases.
+
+Create Base class : We will create HeroBase - base class shared by all models : name and age
+        
+Create table Model : than we create Hero : actual table model with extra fields that are not always in others models like id and secret name
+    Note : hero inherits from HeroBase so he already have access to name and age
+
+HeroPublic - the public data model : this is the one that will be returned to the clients of the API.
+    It has the same fields as HeroBase, so it won't include secret_name.
+    It also re-declares id: int. By doing this, we are making a contract with the API clients, 
+        so that they can always expect the id to be there and to be an int (it will never be None).
+
+HeroCreate - the data model to create a hero : Now we create a HeroCreate model, this is the one that will validate the data from the clients.
+    It has the same fields as HeroBase, and it also has secret_name.
+    so Now, when the clients create a new hero, they will send the secret_name, it will be stored in the database, 
+        but those secret names won't be returned in the API to the clients.
+
+HeroUpdate - the data model to update a hero : this is somewhat special, it has all the fields needed to create a hero but they are optional
+    so you just send the fields which needs to be updated
+    because fields actually change, type now includes Non, we need to re-declare them
+    We don't really need to inherit from HeroBase because we are re-declaring all the fields. 
+        I'll leave it inheriting just for consistency, but this is not necessary. It's more a matter of personal taste. 
+
+Create with HeroCreate and return a HeroPublic : we have multiple models
+    We receive in the request a HeroCreate data model, and from it, we create a Hero table model.
+    This new table model Hero will have the fields sent by the client, and will also have an id generated by the database.
+    Then we return the same table model Hero as is from the function. But as we declare the response_model with the HeroPublic data model, 
+        FastAPI will use HeroPublic to validate and serialize the data.
+
+Read Heroes with HeroPublic : We can do the same as before to read Heros, again, 
+    we use response_model=list[HeroPublic] to ensure that the data is validated and serialized correctly.
+
+Read One Hero with HeroPublic : We can read a single hero as well
+
+Update a Hero with HeroUpdate :  this we use an HTTP PATCH operation.
+    In the code, we get a dict with all the data sent by the client, only the data sent by the client, 
+        excluding any values that would be there just for being the default values. To do it we use exclude_unset=True. This is the main trick.
+    Then we use hero_db.sqlmodel_update(hero_data) to update the hero_db with the data from hero_data.
+
+Delete a Hero Again : Deleting a hero stays pretty much the same.

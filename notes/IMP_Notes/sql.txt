@@ -1,0 +1,2 @@
+FastAPI dependency injection happens at the endpoint level. Once FastAPI has already created the session, 
+    you're just passing the normal Session object into another Python function.

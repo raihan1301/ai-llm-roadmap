@@ -12,7 +12,24 @@ from P06_SmartOps_FastAPI.summarize_complaint_v2 import router as summary_router
 from P06_SmartOps_FastAPI.extract_contract_v2 import router as contract_router
 from P06_SmartOps_FastAPI.draft_followup_v2 import router as draft_router
 
+from P07_SQL.db_logs import router as log_router
+from P07_SQL.db_stats import router as stats_router
+from P07_SQL.contract_scorer import router as contract_scorer_router
+
+"""
 app = FastAPI()
+we can just use the above code to start an fast api app.
+but we are also doing logging into AI log database and we need to create a session so we have to use contextmanager
+"""
+from P07_SQL.AI_Log import create_db_and_tables
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app : FastAPI):
+    create_db_and_tables()
+    yield
+
+app = FastAPI(lifespan=lifespan)
 
 @app.exception_handler(RequestValidationError)
 def validation_exception_handler(request : Request, exc : RequestValidationError):
@@ -53,3 +70,6 @@ app.include_router(classify_router)
 app.include_router(summary_router)
 app.include_router(contract_router)
 app.include_router(draft_router)
+app.include_router(log_router)
+app.include_router(stats_router)
+app.include_router(contract_scorer_router)
