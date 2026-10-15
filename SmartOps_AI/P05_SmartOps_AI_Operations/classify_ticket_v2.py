@@ -39,23 +39,23 @@ def classify_ticket_v2(text):
         return TicketClassificationV2(
             valid = False,
             reason = reason
-        )
+        ), None, None
 
     #step 2 : classify the ticket in category, urgency, sentiment, suggested_action
-    classify = classify_ticket_aws_claude(text)
+    classify, classify_metrics = classify_ticket_aws_claude(text)
     if not classify.valid:
         return TicketClassificationV2(
             valid = False,
             reason = classify.validation_reason
-        )
+        ), classify_metrics, None
 
     #Step 3: get the company policy
     policy = policies(classify.category)
 
     #Step 4: draft the reply
-    draft_reply = draft_policy_reply(text, classify, policy)
+    draft_reply, reply_metrics = draft_policy_reply(text, classify, policy)
 
-    return TicketClassificationV2(
+    final_result = TicketClassificationV2(
         valid = True,
         category = classify.category,
         urgency = classify.urgency,
@@ -64,6 +64,8 @@ def classify_ticket_v2(text):
         policy = policy,
         draft_reply = draft_reply
     )
+
+    return final_result, classify_metrics, reply_metrics
 
 """
 Structured Model for output Ticket Classification
@@ -115,6 +117,15 @@ def validate_safety(text):
 """
 This function will draft reply based on company policies
 """
+"""
+for week 12 logging we have to use LLM metrics and new basemodel
+"""
+class LLMMetrics(BaseModel):
+    model_used : str
+    input_tokens : int
+    output_tokens : int
+    total_tokens : int
+
 def draft_policy_reply(text, classification, policy):
 
     """
@@ -167,7 +178,19 @@ def draft_policy_reply(text, classification, policy):
         ],
     )
 
-    return response.content[0].text
+    reply = response.content[0].text
+
+    """
+    this below code is extra for week 12
+    """
+    metrics = LLMMetrics(
+        model_used = response.model,
+        input_tokens = response.usage.input_tokens,
+        output_tokens = response.usage.output_tokens,
+        total_tokens = (response.usage.input_tokens + response.usage.output_tokens)
+    )
+
+    return reply, metrics
 
 """
 we can keep the parse but than we have to define this structure

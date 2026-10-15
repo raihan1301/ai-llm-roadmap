@@ -70,3 +70,18 @@ Ordering of validators : When using the annotated pattern, the order in which va
     before and wrap validators are run from right to left, and after validators are then run from left to right
     Note : Internally, validators defined using the decorator are converted to their annotated form counterpart and added last after 
         the existing metadata for the field. This means that the same ordering logic applies.
+
+
+Special types : Pydantic provides a few special utilities that can be used to customize validation.
+    InstanceOf : can be used to validate that a value is an instance of a given class.
+    SkipValidation : can be used to skip validation on a field.
+    ValidateAs : can be used to validate a custom type from a type natively supported by Pydantic. 
+        This is particularly useful when using custom types with multiple fields.
+    PydanticUseDefault : can be used to notify Pydantic that the default value should be used.
+
+
+JSON Schema and field validators : When using before, plain or wrap field validators, the accepted input type may be different from the field annotation
+    While the type hint for value is str, the cast_ints validator also allows integers. 
+        To specify the correct input type, the json_schema_input_type argument can be provided:
+Note : As a convenience, Pydantic will use the field type if the argument is not provided (unless you are using a plain validator, 
+    in which case json_schema_input_type defaults to Any as the field type is completely discarded).
